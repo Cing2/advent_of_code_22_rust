@@ -1,9 +1,28 @@
-pub fn part_one(_input: &str) -> Option<u32> {
-    None
+use itertools::Itertools;
+use std::cmp::Reverse;
+
+fn parse_input(input: &str) -> Vec<u32> {
+    input
+        .split("\n\n")
+        .map(|c| c.lines().filter_map(|l| l.parse::<u32>().ok()).sum())
+        .collect()
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_one(input: &str) -> Option<u32> {
+    let sums: Vec<u32> = parse_input(input);
+
+    // println!("{}, {}", sums[0], sums[1]);
+    sums.iter().max().copied()
+}
+
+pub fn part_two(input: &str) -> Option<u32> {
+    let sums: Vec<u32> = parse_input(input);
+    Some(sums.iter()
+        .sorted_by_key(|w| Reverse(*w))
+        .take(3)
+        .sum(), 
+    )
+
 }
 
 fn main() {
@@ -19,12 +38,12 @@ mod tests {
     #[test]
     fn test_part_one() {
         let input = advent_of_code::read_file("examples", 1);
-        assert_eq!(part_one(&input), None);
+        assert_eq!(part_one(&input), Some(24000));
     }
 
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 1);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(45000));
     }
 }
