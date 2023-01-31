@@ -17,12 +17,7 @@ pub fn part_one(input: &str) -> Option<u32> {
 
 pub fn part_two(input: &str) -> Option<u32> {
     let sums: Vec<u32> = parse_input(input);
-    Some(sums.iter()
-        .sorted_by_key(|w| Reverse(*w))
-        .take(3)
-        .sum(), 
-    )
-
+    Some(sums.iter().sorted_by_key(|w| Reverse(*w)).take(3).sum())
 }
 
 fn main() {
