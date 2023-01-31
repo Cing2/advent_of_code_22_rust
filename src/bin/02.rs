@@ -32,12 +32,12 @@ fn rock_paper_scissors(a: &str, b: &str) -> u32 {
 
 fn rps_determined(a: &str, b: &str) -> u32 {
     let mut score = match b {
-        "X"=> 0,
-        "Y"=> 3,
-        "Z"=> 6,
-        _=> 0,
+        "X" => 0,
+        "Y" => 3,
+        "Z" => 6,
+        _ => 0,
     };
-    score +=    match (a, b) {
+    score += match (a, b) {
         ("A", "X") | ("B", "Z") | ("C", "Y") => 3, // you playing scissor
         ("A", "Y") | ("B", "X") | ("C", "Z") => 1, // you playing rock
         ("A", "Z") | ("B", "Y") | ("C", "X") => 2, // you playing paper
