@@ -9,6 +9,7 @@ dependencies = [
  "aoc-cli",
  "itertools",
  "pico-args",
+ "regex",
 ]
 
 [[package]]
