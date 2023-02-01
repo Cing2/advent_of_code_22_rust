@@ -24,17 +24,17 @@ fn check_overlap(line: &str) -> u32 {
                 .collect::<Vec<u32>>()
         })
         .tuples()
-        .map(|(e1, e2)| e1[1] >= e2[0] && e1[0] <=e2[1])
+        .map(|(e1, e2)| e1[1] >= e2[0] && e1[0] <= e2[1])
         .reduce(|a, b| a & b);
     output.unwrap_or(false) as u32
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    Some(input.lines().map(|l| check_containment(l)).sum())
+    Some(input.lines().map(check_containment).sum())
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    Some(input.lines().map(|l| check_overlap(l)).sum())
+    Some(input.lines().map(check_overlap).sum())
 }
 
 fn main() {
