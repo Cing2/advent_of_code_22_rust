@@ -22,7 +22,7 @@ fn char_containers(line: &str) -> Vec<char> {
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    Some(input.lines().map(|l| line_to_priority(l)).sum())
+    Some(input.lines().map(line_to_priority).sum())
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
