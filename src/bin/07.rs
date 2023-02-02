@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-
-
 fn create_filesystem(input: &str) -> HashMap<Vec<String>, i32> {
     let mut filesystem: HashMap<Vec<String>, i32> = HashMap::new();
     let mut cwd: Vec<String> = vec![];
@@ -51,13 +49,11 @@ pub fn part_one(input: &str) -> Option<i32> {
 pub fn part_two(input: &str) -> Option<i32> {
     let filesystem: HashMap<Vec<String>, i32> = create_filesystem(input);
 
-    let unused_space: i32 = 70000000 - filesystem.get(&vec!["/".to_string()]).unwrap_or(&0);
+    let space_needed: i32 = 30000000 - (70000000 - filesystem.get(&vec!["/".to_string()]).unwrap_or(&0));
     let mut closest_dir = 70000000;
-    println!("{unused_space}");
     for item in filesystem {
-        if item.1 > unused_space && item.1 - unused_space < closest_dir {
+        if item.1 > space_needed && item.1 - space_needed < closest_dir - space_needed {
             closest_dir = item.1;
-            println!("{item:?}");
         }
     }
 
@@ -82,7 +78,7 @@ mod tests {
 
     #[test]
     fn test_part_two() {
-        let input = advent_of_code::read_file("inputs", 7);
+        let input = advent_of_code::read_file("examples", 7);
         assert_eq!(part_two(&input), Some(24933642));
     }
 }
