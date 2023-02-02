@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use regex::Regex;
+
 
 fn create_filesystem(input: &str) -> HashMap<Vec<String>, i32> {
     let mut filesystem: HashMap<Vec<String>, i32> = HashMap::new();
@@ -53,13 +53,11 @@ pub fn part_two(input: &str) -> Option<i32> {
 
     let unused_space: i32 = 70000000 - filesystem.get(&vec!["/".to_string()]).unwrap_or(&0);
     let mut closest_dir = 70000000;
-    println!("{}", unused_space);
+    println!("{unused_space}");
     for item in filesystem {
-        if item.1 > unused_space {
-            if item.1 - unused_space < closest_dir {
-                closest_dir = item.1;
-                println!("{:?}", item);
-            }
+        if item.1 > unused_space && item.1 - unused_space < closest_dir {
+            closest_dir = item.1;
+            println!("{item:?}");
         }
     }
 

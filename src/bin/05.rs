@@ -6,7 +6,7 @@ use regex::Regex;
 fn parse_crates(input: &str) -> Vec<VecDeque<char>> {
     let mut crate_lines: Vec<Vec<char>> = vec![];
     for l in input.lines() {
-        if !l.contains("[") {
+        if !l.contains('[') {
             break;
         };
         crate_lines.push(
@@ -27,7 +27,7 @@ fn parse_crates(input: &str) -> Vec<VecDeque<char>> {
     }
     // println!("crates: {:?}", crates);
 
-    return crates;
+    crates
 }
 
 pub fn part_one(input: &str) -> Option<String> {
