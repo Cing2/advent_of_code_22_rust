@@ -1,10 +1,10 @@
 use itertools::Itertools;
 
 fn no_duplicates(chars: Vec<char>) -> bool {
-    if chars.len() == 1{
+    if chars.len() == 1 {
         return true;
     }
-    for i in 1..(chars.len()){
+    for i in 1..(chars.len()) {
         if chars[0] == chars[i] {
             return false;
         }
@@ -12,12 +12,11 @@ fn no_duplicates(chars: Vec<char>) -> bool {
 
     no_duplicates(chars[1..].to_vec())
 }
-fn calculate_start_packet(input: &str, nr_chars_dup:usize) -> Option<i32> {
+fn calculate_start_packet(input: &str, nr_chars_dup: usize) -> Option<i32> {
     let chars: Vec<char> = input.chars().collect_vec();
 
     for i in 0..input.len() {
-        if no_duplicates(chars[i..i+nr_chars_dup].to_vec())
-        {
+        if no_duplicates(chars[i..i + nr_chars_dup].to_vec()) {
             return Some((i + nr_chars_dup).try_into().unwrap());
         }
     }
