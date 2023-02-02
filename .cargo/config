@@ -4,4 +4,4 @@ download = "run --bin download --quiet --release -- "
 read = "run --bin read --quiet --release -- "
 
 solve = "run --release --bin"
-all = "run"
+all = "run --release"

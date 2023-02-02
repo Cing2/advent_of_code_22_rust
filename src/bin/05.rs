@@ -25,7 +25,7 @@ fn parse_crates(input: &str) -> Vec<VecDeque<char>> {
             }
         }
     }
-    println!("crates: {:?}", crates);
+    // println!("crates: {:?}", crates);
 
     return crates;
 }
