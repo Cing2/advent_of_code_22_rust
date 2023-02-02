@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use ndarray::{s, Array, ArrayBase, DataMut, Dim, IxDynImpl, OwnedRepr};
+use ndarray::{Array, ArrayBase, Dim, OwnedRepr};
 
 fn create_trees_array(input: &str) -> ArrayBase<OwnedRepr<i16>, Dim<[usize; 2]>> {
     // let mut trees = Array::new();
@@ -16,14 +16,14 @@ fn create_trees_array(input: &str) -> ArrayBase<OwnedRepr<i16>, Dim<[usize; 2]>>
         .take(1)
         .map(|a| a.len())
         .collect::<Vec<usize>>()[0];
-    let trees = Array::from_shape_vec((width, out.len() / width), out).unwrap();
-    trees
+
+    Array::from_shape_vec((width, out.len() / width), out).unwrap()
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
     let trees = create_trees_array(input);
     let mut mask = Array::<i16, _>::zeros(trees.shape());
-    println!("{trees:?}");
+    // println!("{trees:?}");
 
     for c in 0..(trees.ncols()) {
         // from top to bottom
@@ -32,7 +32,6 @@ pub fn part_one(input: &str) -> Option<u32> {
             if trees[[i, c]] > last_tree_height {
                 mask[[i, c]] = 1;
                 last_tree_height = trees[[i, c]];
-            } else {
             }
         }
         // from bottom to top
@@ -41,7 +40,6 @@ pub fn part_one(input: &str) -> Option<u32> {
             if trees[[i, c]] > last_tree_height {
                 mask[[i, c]] = 1;
                 last_tree_height = trees[[i, c]];
-            } else {
             }
         }
     }
@@ -52,7 +50,6 @@ pub fn part_one(input: &str) -> Option<u32> {
             if trees[[i, c]] > last_tree_height {
                 mask[[i, c]] = 1;
                 last_tree_height = trees[[i, c]];
-            } else {
             }
         }
         // from bottom to top
@@ -61,14 +58,10 @@ pub fn part_one(input: &str) -> Option<u32> {
             if trees[[i, c]] > last_tree_height {
                 mask[[i, c]] = 1;
                 last_tree_height = trees[[i, c]];
-            } else {
             }
         }
     }
-
-    // println!("{:?}", mask.slice(s![0, ..]));
-
-    println!("{mask:?}");
+    // println!("{mask:?}");
 
     Some(mask.sum().try_into().unwrap_or_default())
 }
