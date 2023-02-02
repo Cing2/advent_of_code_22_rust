@@ -49,7 +49,8 @@ pub fn part_one(input: &str) -> Option<i32> {
 pub fn part_two(input: &str) -> Option<i32> {
     let filesystem: HashMap<Vec<String>, i32> = create_filesystem(input);
 
-    let space_needed: i32 = 30000000 - (70000000 - filesystem.get(&vec!["/".to_string()]).unwrap_or(&0));
+    let space_needed: i32 =
+        30000000 - (70000000 - filesystem.get(&vec!["/".to_string()]).unwrap_or(&0));
     let mut closest_dir = 70000000;
     for item in filesystem {
         if item.1 > space_needed && item.1 - space_needed < closest_dir - space_needed {
