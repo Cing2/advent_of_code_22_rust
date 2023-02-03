@@ -1,7 +1,5 @@
-use std::{iter::Rev, ops::Range};
-
-use itertools::{Either, Itertools};
-use ndarray::{s, Array, ArrayBase, Dim, NdIndex, OwnedRepr};
+use itertools::Itertools;
+use ndarray::{Array, ArrayBase, Dim, OwnedRepr};
 
 type Ttrees = ArrayBase<OwnedRepr<i16>, Dim<[usize; 2]>>;
 
@@ -11,7 +9,7 @@ fn create_trees_array(input: &str) -> Ttrees {
         .lines()
         .flat_map(|c| {
             c.chars()
-                .filter_map(|a| Some((a as i32 - 0x30) as i16))
+                .map(|a| ((a as i32 - 0x30) as i16))
                 .collect::<Vec<i16>>()
         })
         .collect_vec();
@@ -26,7 +24,7 @@ fn create_trees_array(input: &str) -> Ttrees {
 
 pub fn part_one(input: &str) -> Option<u32> {
     let trees: Ttrees = create_trees_array(input);
-    println!("{:?}", trees.is_square());
+    // println!("{:?}", trees.is_square());
 
     let mut mask = Array::<i16, _>::zeros(trees.shape());
     // println!("{trees:?}");
@@ -57,36 +55,39 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 fn calc_scenic_score(trees: &Ttrees, pos: (usize, usize)) -> u32 {
-    let mut score = 0;
+    if pos.0 == 0 || pos.1 == 0 || pos.0 == trees.nrows() - 1 || pos.1 == trees.ncols() - 1 {
+        return 0;
+    }
+    let mut score = 1;
     let tree_height = trees[pos];
-    // row to right
+    // right
     for j in (pos.1 + 1)..trees.ncols() {
         if tree_height <= trees[[pos.0, j]] || j == trees.ncols() - 1 {
-            score += j - pos.1;
+            score *= j - pos.1;
             break;
         }
     }
-    // row to left
+    // left
     if pos.1 > 0 {
-        for j in (0..(pos.1 - 1)).rev() {
+        for j in (0..(pos.1)).rev() {
             if tree_height <= trees[[pos.0, j]] || j == 0 {
-                score += pos.1 - j;
+                score *= pos.1 - j;
                 break;
             }
         }
     }
-    // column to bottom
+    // bottom
     for j in (pos.0 + 1)..trees.nrows() {
         if tree_height <= trees[[j, pos.1]] || j == trees.nrows() - 1 {
-            score += j - pos.0;
+            score *= j - pos.0;
             break;
         }
     }
-    // row to top
+    //  top
     if pos.0 > 0 {
-        for j in (0..(pos.0 - 1)).rev() {
+        for j in (0..(pos.0)).rev() {
             if tree_height <= trees[[j, pos.1]] || j == 0 {
-                score += pos.0 - j;
+                score *= pos.0 - j;
                 break;
             }
         }
@@ -100,8 +101,12 @@ fn calc_scenic_score(trees: &Ttrees, pos: (usize, usize)) -> u32 {
 pub fn part_two(input: &str) -> Option<u32> {
     let trees = create_trees_array(input);
     let mut scene_score = Array::<u32, _>::zeros(trees.shape());
-    println!("{:?}", trees.shape());
+    // println!("{:?}", trees.shape());
 
+    for (pos, _) in trees.indexed_iter() {
+        scene_score[[pos.0, pos.1]] = calc_scenic_score(&trees, pos);
+    }
+    // println!("{:?}", scene_score);
     trees
         .indexed_iter()
         .map(|(pos, _)| calc_scenic_score(&trees, pos))
