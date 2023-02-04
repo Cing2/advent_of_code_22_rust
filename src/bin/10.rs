@@ -1,6 +1,4 @@
 pub fn part_one(input: &str) -> Option<u32> {
-
-    
     None
 }
 
