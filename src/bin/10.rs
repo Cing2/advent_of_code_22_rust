@@ -1,8 +1,66 @@
-pub fn part_one(input: &str) -> Option<u32> {
-    None
+pub fn part_one(input: &str) -> Option<i64> {
+    let mut signal_strength: i64 = 1;
+    let mut total_strength: i64 = 0;
+    let mut cycle: i64 = 0;
+    for line in input.lines() {
+        // println!("{cycle}-{signal_strength}-{total_strength}");
+        if line == "noop" {
+            cycle += 1;
+            if cycle ==20 || (cycle-20) % 40 == 0 {
+                // println!("adding: {cycle}*{signal_strength}={} - {total_strength}", cycle*signal_strength);
+                total_strength += signal_strength * cycle;
+            }
+            continue;
+        }
+        let (_, right) = line.split_once(' ').unwrap();
+        let num = right.parse::<i64>().unwrap_or_default();
+        for _ in 0..2 {
+            cycle += 1;
+            if cycle ==20 || (cycle-20) % 40 == 0 {
+                // println!("adding: {cycle}*{signal_strength}={} - {total_strength}", cycle*signal_strength);
+                total_strength += signal_strength * cycle;
+            }
+        }
+        signal_strength += num;
+    }
+
+    Some(total_strength)
+}
+
+fn print_pixel(s_strength: i64, cycle:i64){
+    // determine if s_strength is close to current pixel drawn
+    if cycle% 40 == 0 && cycle!=0{
+        print!("\n");
+    }
+
+    if ((cycle%40) - s_strength) <=1 && ((cycle%40) - s_strength) >= -1  {
+        print!("#");
+    }else{
+        print!(".")
+    }
+    // println!("{} - {}", s_strength, cycle%40);
+
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
+    let mut signal_strength: i64 = 1;
+    let mut cycle: i64 = 0;
+    for line in input.lines() {
+        // println!("{cycle}-{signal_strength}-{total_strength}");
+        if line == "noop" {
+            print_pixel(signal_strength, cycle);
+            cycle += 1;
+            continue;
+        }
+        let (_, right) = line.split_once(' ').unwrap();
+        let num = right.parse::<i64>().unwrap_or_default();
+        for _ in 0..2 {
+            print_pixel(signal_strength, cycle);
+            cycle += 1;
+        }
+        signal_strength += num;
+    }
+
     None
 }
 
