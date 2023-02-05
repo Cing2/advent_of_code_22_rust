@@ -6,7 +6,7 @@ pub fn part_one(input: &str) -> Option<i64> {
         // println!("{cycle}-{signal_strength}-{total_strength}");
         if line == "noop" {
             cycle += 1;
-            if cycle ==20 || (cycle-20) % 40 == 0 {
+            if cycle == 20 || (cycle - 20) % 40 == 0 {
                 // println!("adding: {cycle}*{signal_strength}={} - {total_strength}", cycle*signal_strength);
                 total_strength += signal_strength * cycle;
             }
@@ -16,7 +16,7 @@ pub fn part_one(input: &str) -> Option<i64> {
         let num = right.parse::<i64>().unwrap_or_default();
         for _ in 0..2 {
             cycle += 1;
-            if cycle ==20 || (cycle-20) % 40 == 0 {
+            if cycle == 20 || (cycle - 20) % 40 == 0 {
                 // println!("adding: {cycle}*{signal_strength}={} - {total_strength}", cycle*signal_strength);
                 total_strength += signal_strength * cycle;
             }
@@ -27,26 +27,23 @@ pub fn part_one(input: &str) -> Option<i64> {
     Some(total_strength)
 }
 
-fn print_pixel(s_strength: i64, cycle:i64){
-    // determine if s_strength is close to current pixel drawn
-    if cycle% 40 == 0 && cycle!=0{
-        print!("\n");
+fn print_pixel(s_strength: i64, cycle: i64) {
+    if cycle % 40 == 0 && cycle != 0 {
+        println!();
     }
-
-    if ((cycle%40) - s_strength) <=1 && ((cycle%40) - s_strength) >= -1  {
+    
+    // determine if s_strength is close to current pixel drawn
+    if ((cycle % 40) - s_strength) <= 1 && ((cycle % 40) - s_strength) >= -1 {
         print!("#");
-    }else{
+    } else {
         print!(".")
     }
-    // println!("{} - {}", s_strength, cycle%40);
-
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
     let mut signal_strength: i64 = 1;
     let mut cycle: i64 = 0;
     for line in input.lines() {
-        // println!("{cycle}-{signal_strength}-{total_strength}");
         if line == "noop" {
             print_pixel(signal_strength, cycle);
             cycle += 1;
