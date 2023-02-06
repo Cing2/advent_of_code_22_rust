@@ -31,7 +31,7 @@ fn print_pixel(s_strength: i64, cycle: i64) {
     if cycle % 40 == 0 && cycle != 0 {
         println!();
     }
-    
+
     // determine if s_strength is close to current pixel drawn
     if ((cycle % 40) - s_strength) <= 1 && ((cycle % 40) - s_strength) >= -1 {
         print!("#");

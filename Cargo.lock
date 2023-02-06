@@ -7,6 +7,7 @@ name = "advent_of_code"
 version = "0.8.0"
 dependencies = [
  "aoc-cli",
+ "closure",
  "itertools",
  "ndarray",
  "pico-args",
@@ -174,6 +175,12 @@ checksum = "783fe232adfca04f90f56201b26d79682d4cd2625e0bc7290b95123afe558ade"
 dependencies = [
  "os_str_bytes",
 ]
+
+[[package]]
+name = "closure"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6173fd61b610d15a7566dd7b7620775627441c4ab9dac8906e17cb93a24b782"
 
 [[package]]
 name = "codespan-reporting"
