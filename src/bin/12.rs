@@ -125,57 +125,6 @@ pub fn part_two(input: &str) -> Option<i32> {
     let map = process_input(input);
     let (_, end) = get_start_end(input);
 
-    // implement breath first search from end node to first a
-    let mut queue: VecDeque<(i32, i32, i32)> = VecDeque::new();
-    let mut visited: HashSet<(i32, i32)> = HashSet::new();
-    queue.push_back((end.0, end.1, 0));
-    visited.insert(end);
-
-    while !queue.is_empty() {
-        let current = queue.pop_front().unwrap();
-        // println!("{:?}: {}", current, map[current.0 as usize][current.1 as usize]);
-        if map[current.0 as usize][current.1 as usize] == 0 {
-            return Some(current.2);
-        }
-
-        // loop over sucessors
-        for dir in &[(0, 1), (1, 0), (0, -1), (-1, 0)] {
-            let new_pos = (current.0 + dir.0, current.1 + dir.1);
-            // println!("nieuw: {:?}", new_pos);
-            // check if position is on map
-            if new_pos.0 < 0
-                || new_pos.0 >= map.len().try_into().unwrap()
-                || new_pos.1 < 0
-                || new_pos.1 >= map[0].len().try_into().unwrap()
-            {
-                continue;
-            }
-            // check if position is not more than 1 heigher or lower
-            // dbg!(map[new_pos.0 as usize][new_pos.1 as usize],  map[current.0 as usize][current.1 as usize]);
-            if (map[new_pos.0 as usize][new_pos.1 as usize]
-                - map[current.0 as usize][current.1 as usize])
-                .abs()
-                > 1
-            {
-                continue;
-                
-            }
-            if !visited.contains(&new_pos) {
-                // println!("added");
-
-                queue.push_back((new_pos.0, new_pos.1, current.2+1));
-                visited.insert(new_pos);
-            }
-        }
-    }
-    dbg!(visited.len(), map.len()*map[0].len());
-    None
-}
-
-pub fn part_two2(input: &str) -> Option<i32> {
-    let map = process_input(input);
-    let (_, end) = get_start_end(input);
-
     // apply alpha star search
     let mut open: Vec<Node> = vec![];
     let mut closed: Vec<Node> = vec![];
@@ -250,7 +199,7 @@ pub fn part_two2(input: &str) -> Option<i32> {
 fn main() {
     let input = &advent_of_code::read_file("inputs", 12);
     advent_of_code::solve!(1, part_one, input);
-    advent_of_code::solve!(2, part_two2, input);
+    advent_of_code::solve!(2, part_two, input);
 }
 
 #[cfg(test)]
@@ -266,6 +215,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 12);
-        assert_eq!(part_two2(&input), Some(29));
+        assert_eq!(part_two(&input), Some(29));
     }
 }
