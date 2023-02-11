@@ -1,4 +1,4 @@
-use std::{collections::HashMap, iter::Enumerate};
+use std::{collections::HashMap, iter::Enumerate, rc::Rc};
 
 use itertools::{enumerate, zip, Itertools};
 
@@ -25,9 +25,9 @@ fn get_start_end(input: &str) -> ((i32, i32), (i32, i32)) {
     for (i, line) in enumerate(input.lines()) {
         for (j, c) in line.char_indices() {
             if c == 'S' {
-                start = (i, j);
+                start = (i as i32, j as i32);
             } else if c == 'E' {
-                end = (i, j);
+                end = (i as i32, j as i32);
             }
         }
     }
@@ -36,10 +36,10 @@ fn get_start_end(input: &str) -> ((i32, i32), (i32, i32)) {
 }
 
 #[derive(Debug)]
-struct Node<'a> {
+struct Node {
     g: i32, // the movement cost to move from the starting point to a given square on the grid, following the path generated to get there.
     h: i32, // the estimated movement cost to move from that given square on the grid to the final destination.
-    parent: Option<&'a Node<'a>>,
+    // parent: Option<Rc<Node>>,
     pos: (i32, i32),
     height: i32,
 }
@@ -57,13 +57,13 @@ pub fn part_one(input: &str) -> Option<u32> {
     let mut open: Vec<Node> = vec![Node {
         g: 0,
         h: manhatten_dist(start, end),
-        parent: None,
+        // parent: None,
         pos: start,
         height: 0,
     }];
     let mut closed: Vec<Node> = vec![];
 
-    while !open.is_empty() {
+    while open.len() > 0 {
         open.sort_by_key(|n| n.g + n.h);
         let node_f = open.pop().unwrap();
 
@@ -84,19 +84,19 @@ pub fn part_one(input: &str) -> Option<u32> {
             let new_node = Node {
                 g: node_f.g + 1,
                 h: manhatten_dist(new_pos, end),
-                parent: Some(&node_f),
+                // parent: Some(Rc::new(node_f)),
                 pos: new_pos,
                 height: height_new,
             };
-            dbg!(new_node);
+            dbg!(&new_node);
             // check if we do not already have a node with a lower value in open
             let mut is_lowest = true;
-            for n in open {
+            for n in &open {
                 if n.pos == new_node.pos && (n.g + n.h) < (new_node.g + new_node.h) {
                     is_lowest = false;
                 }
             }
-            for n in closed {
+            for n in &closed {
                 if n.pos == new_node.pos && (n.g + n.h) < (new_node.g + new_node.h) {
                     is_lowest = false;
                 }
