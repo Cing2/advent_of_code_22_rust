@@ -48,13 +48,13 @@ fn create_monkeys(input: &str) -> Vec<Monkey> {
         } else if line.contains("Operation") {
             //  create operation function
             if line.contains('+') {
-                let (_, right) = line.split_once("+").unwrap();
+                let (_, right) = line.split_once('+').unwrap();
                 let num = right.trim().parse::<i64>().unwrap();
                 monkeys[current_monkey].operation = Box::new(closure!(move num, |old| {old + num}));
             } else if line.contains("old * old") {
                 monkeys[current_monkey].operation = Box::new(|old| old * old);
-            } else if line.contains("*") {
-                let (_, right) = line.split_once("*").unwrap();
+            } else if line.contains('*') {
+                let (_, right) = line.split_once('*').unwrap();
                 let num = right.trim().parse::<i64>().unwrap();
                 monkeys[current_monkey].operation = Box::new(closure!(move num, |old| {old * num}));
             }
@@ -103,7 +103,7 @@ pub fn part_one(input: &str) -> Option<i64> {
     }
     // println!("{monkeys:?}");
 
-    monkeys.sort_by_key(|c| -1 * c.nr_inspect.get());
+    monkeys.sort_by_key(|c| -c.nr_inspect.get());
     Some(monkeys[0].nr_inspect.get() * monkeys[1].nr_inspect.get())
 }
 
@@ -126,7 +126,7 @@ pub fn part_two(input: &str) -> Option<i64> {
                     .set(current_monkey.nr_inspect.get() + 1);
                 let mut item = items.pop_front().unwrap();
                 item = (current_monkey.operation)(item);
-                item = item % worry_divider;
+                item %= worry_divider;
                 // println!("{item}");
                 if item % current_monkey.test.0 == 0 {
                     monkeys[current_monkey.test.1 as usize]
@@ -144,7 +144,7 @@ pub fn part_two(input: &str) -> Option<i64> {
         }
     }
 
-    monkeys.sort_by_key(|c| -1 * c.nr_inspect.get());
+    monkeys.sort_by_key(|c| -c.nr_inspect.get());
     // println!("{monkeys:?}");
 
     Some(monkeys[0].nr_inspect.get() * monkeys[1].nr_inspect.get())

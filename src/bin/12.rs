@@ -1,6 +1,6 @@
-use std::{collections::HashMap, iter::Enumerate, rc::Rc};
 
-use itertools::{enumerate, zip, Itertools};
+
+use itertools::{enumerate, Itertools};
 
 fn letter_to_height(c: char) -> i32 {
     if c == 'S' {
@@ -8,7 +8,7 @@ fn letter_to_height(c: char) -> i32 {
     } else if c == 'E' {
         return 25; // z height
     }
-    return c as i32 - 97;
+    c as i32 - 97
 }
 
 fn process_input(input: &str) -> Vec<Vec<i32>> {
@@ -63,12 +63,12 @@ pub fn part_one(input: &str) -> Option<u32> {
     }];
     let mut closed: Vec<Node> = vec![];
 
-    while open.len() > 0 {
+    while !open.is_empty() {
         open.sort_by_key(|n| n.g + n.h);
         let node_f = open.pop().unwrap();
 
         // loop over sucessors
-        for dir in vec![(0, 1), (1, 0), (0, -1), (-1, 0)] {
+        for dir in &[(0, 1), (1, 0), (0, -1), (-1, 0)] {
             let new_pos = (node_f.pos.0 + dir.0, node_f.pos.1 + dir.1);
             let height_new = map[new_pos.0 as usize][new_pos.1 as usize];
             // check if position is on map
@@ -113,7 +113,7 @@ pub fn part_one(input: &str) -> Option<u32> {
     None
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
+pub fn part_two(_input: &str) -> Option<u32> {
     None
 }
 
