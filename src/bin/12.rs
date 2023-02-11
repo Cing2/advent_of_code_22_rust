@@ -1,5 +1,3 @@
-
-
 use itertools::{enumerate, Itertools};
 
 fn letter_to_height(c: char) -> i32 {
@@ -48,39 +46,37 @@ fn manhatten_dist(a: (i32, i32), b: (i32, i32)) -> i32 {
     (a.0 - b.0).abs() + (a.1 - b.1).abs()
 }
 
-pub fn part_one(input: &str) -> Option<u32> {
-    let map = process_input(input);
-    // dbg!(map);
-    let (start, end) = get_start_end(input);
-
+fn a_star_search(start: Node, end: (i32, i32), map: Vec<Vec<i32>>) -> i32 {
     // apply alpha star search
-    let mut open: Vec<Node> = vec![Node {
-        g: 0,
-        h: manhatten_dist(start, end),
-        // parent: None,
-        pos: start,
-        height: 0,
-    }];
+    let mut open: Vec<Node> = vec![start];
     let mut closed: Vec<Node> = vec![];
 
     while !open.is_empty() {
-        open.sort_by_key(|n| n.g + n.h);
+        open.sort_by_key(|n| -(n.g + n.h));
+        // dbg!(&open);
         let node_f = open.pop().unwrap();
+        if node_f.pos == end {
+            println!("Found the end!");
+            return node_f.g;
+        }
 
         // loop over sucessors
         for dir in &[(0, 1), (1, 0), (0, -1), (-1, 0)] {
             let new_pos = (node_f.pos.0 + dir.0, node_f.pos.1 + dir.1);
-            let height_new = map[new_pos.0 as usize][new_pos.1 as usize];
             // check if position is on map
             if new_pos.0 < 0
                 || new_pos.0 >= map.len().try_into().unwrap()
                 || new_pos.1 < 0
-                || new_pos.1 >= map.len().try_into().unwrap()
-                || height_new > node_f.height + 1
-            // check if position is not more then 1 heigher
+                || new_pos.1 >= map[0].len().try_into().unwrap()
             {
-                break;
+                continue;
             }
+            // check if position is not more then 1 heigher
+            let height_new = map[new_pos.0 as usize][new_pos.1 as usize];
+            if height_new > node_f.height + 1 {
+                continue;
+            }
+
             let new_node = Node {
                 g: node_f.g + 1,
                 h: manhatten_dist(new_pos, end),
@@ -88,29 +84,39 @@ pub fn part_one(input: &str) -> Option<u32> {
                 pos: new_pos,
                 height: height_new,
             };
-            dbg!(&new_node);
-            // check if we do not already have a node with a lower value in open
+            // check if we do not already have a node with a lower value in open or closed
             let mut is_lowest = true;
             for n in &open {
-                if n.pos == new_node.pos && (n.g + n.h) < (new_node.g + new_node.h) {
+                if n.pos == new_node.pos && n.g <= new_node.g {
                     is_lowest = false;
                 }
             }
             for n in &closed {
-                if n.pos == new_node.pos && (n.g + n.h) < (new_node.g + new_node.h) {
+                if n.pos == new_node.pos && n.g <= new_node.g {
                     is_lowest = false;
                 }
             }
             if !is_lowest {
-                break;
+                continue;
             }
             open.push(new_node);
-
         }
         closed.push(node_f);
     }
+    0
+}
 
-    None
+pub fn part_one(input: &str) -> Option<i32> {
+    let map = process_input(input);
+    let (start, end) = get_start_end(input);
+
+    let start_node = Node {
+        g: 0,
+        h: manhatten_dist(start, end),
+        pos: start,
+        height: 0,
+    };
+    Some(a_star_search(start_node, end, map))
 }
 
 pub fn part_two(_input: &str) -> Option<u32> {
@@ -130,7 +136,7 @@ mod tests {
     #[test]
     fn test_part_one() {
         let input = advent_of_code::read_file("examples", 12);
-        assert_eq!(part_one(&input), None);
+        assert_eq!(part_one(&input), Some(31));
     }
 
     #[test]
