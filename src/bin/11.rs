@@ -7,10 +7,10 @@ use std::{
 };
 
 struct Monkey {
-    items: RefCell<VecDeque<i32>>,
-    operation: Box<dyn Fn(i32) -> i32>,
-    test: (i32, i32, i32), // divisible by, true to monkey, false to monkey
-    nr_inspect: Cell<i32>,
+    items: RefCell<VecDeque<i64>>,
+    operation: Box<dyn Fn(i64) -> i64>,
+    test: (i64, i32, i32), // divisible by, true to monkey, false to monkey
+    nr_inspect: Cell<i64>,
 }
 impl fmt::Debug for Monkey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -38,10 +38,10 @@ fn create_monkeys(input: &str) -> Vec<Monkey> {
         }
         if line.contains("Starting items:") {
             let (_, right) = line.split_once(':').unwrap();
-            monkeys[current_monkey].items = Into::<VecDeque<i32>>::into(
+            monkeys[current_monkey].items = Into::<VecDeque<i64>>::into(
                 right
                     .split(',')
-                    .map(|c| c.trim().parse::<i32>().unwrap_or_default())
+                    .map(|c| c.trim().parse::<i64>().unwrap_or_default())
                     .collect_vec(),
             )
             .into();
@@ -49,18 +49,18 @@ fn create_monkeys(input: &str) -> Vec<Monkey> {
             //  create operation function
             if line.contains('+') {
                 let (_, right) = line.split_once("+").unwrap();
-                let num = right.trim().parse::<i32>().unwrap();
+                let num = right.trim().parse::<i64>().unwrap();
                 monkeys[current_monkey].operation = Box::new(closure!(move num, |old| {old + num}));
             } else if line.contains("old * old") {
                 monkeys[current_monkey].operation = Box::new(|old| old * old);
             } else if line.contains("*") {
                 let (_, right) = line.split_once("*").unwrap();
-                let num = right.trim().parse::<i32>().unwrap();
+                let num = right.trim().parse::<i64>().unwrap();
                 monkeys[current_monkey].operation = Box::new(closure!(move num, |old| {old * num}));
             }
         } else if line.contains("divisible by") {
             let (_, right) = line.split_once("divisible by ").unwrap();
-            monkeys[current_monkey].test.0 = right.parse::<i32>().unwrap();
+            monkeys[current_monkey].test.0 = right.parse::<i64>().unwrap();
         } else if line.contains("true") {
             let (_, right) = line.split_once("to monkey ").unwrap();
             monkeys[current_monkey].test.1 = right.parse::<i32>().unwrap();
@@ -73,7 +73,7 @@ fn create_monkeys(input: &str) -> Vec<Monkey> {
     monkeys
 }
 
-pub fn part_one(input: &str) -> Option<i32> {
+pub fn part_one(input: &str) -> Option<i64> {
     let mut monkeys = create_monkeys(input);
     // println!("{monkeys:?}");
 
@@ -107,8 +107,47 @@ pub fn part_one(input: &str) -> Option<i32> {
     Some(monkeys[0].nr_inspect.get() * monkeys[1].nr_inspect.get())
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<i64> {
+    let mut monkeys = create_monkeys(input);
+    // println!("{monkeys:?}");
+    let worry_divider = monkeys
+        .iter()
+        .map(|m| m.test.0)
+        .reduce(|a, b| a * b)
+        .unwrap();
+    for _ in 0..10000 {
+        // simulate round
+        for i in 0..monkeys.len() {
+            let current_monkey = &monkeys[i];
+            let mut items = current_monkey.items.borrow_mut();
+            for _ in 0..items.len() {
+                current_monkey
+                    .nr_inspect
+                    .set(current_monkey.nr_inspect.get() + 1);
+                let mut item = items.pop_front().unwrap();
+                item = (current_monkey.operation)(item);
+                item = item % worry_divider;
+                // println!("{item}");
+                if item % current_monkey.test.0 == 0 {
+                    monkeys[current_monkey.test.1 as usize]
+                        .items
+                        .borrow_mut()
+                        .push_back(item);
+                } else {
+                    // item =
+                    monkeys[current_monkey.test.2 as usize]
+                        .items
+                        .borrow_mut()
+                        .push_back(item);
+                }
+            }
+        }
+    }
+
+    monkeys.sort_by_key(|c| -1 * c.nr_inspect.get());
+    // println!("{monkeys:?}");
+
+    Some(monkeys[0].nr_inspect.get() * monkeys[1].nr_inspect.get())
 }
 
 fn main() {
@@ -130,6 +169,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 11);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(2713310158));
     }
 }
