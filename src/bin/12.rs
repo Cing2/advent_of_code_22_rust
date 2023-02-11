@@ -1,5 +1,3 @@
-use std::collections::{HashSet, VecDeque};
-
 use itertools::{enumerate, Itertools};
 
 fn letter_to_height(c: char) -> i32 {
