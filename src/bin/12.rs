@@ -123,44 +123,25 @@ pub fn part_one(input: &str) -> Option<i32> {
 
 pub fn part_two(input: &str) -> Option<i32> {
     let map = process_input(input);
-    let (start, end) = get_start_end(input);
-    // let mut start_nodes: Vec<Node> = vec![];
-    // for i in 0..map.len() {
-    //     for j in 0..map[0].len() {
-    //         if map[i][j] == 0 {
-    //             start_nodes.push(Node {
-    //                 g: 0,
-    //                 h: manhatten_dist((i as i32, j as i32), end),
-    //                 pos: (i as i32, j as i32),
-    //                 height: 0,
-    //             })
-    //         }
-    //     }
-    // }
-    // start_nodes.iter().map(|n| a_star_search(*n, end, &map)).min()
-    // apply alpha star search
-    let mut open: Vec<Node> = vec![Node {
-        g: 0,
-        h: manhatten_dist(start, end),
-        pos: start,
-        height: 0,
-    }];
-    let mut closed: Vec<Node> = vec![];
+    let (_, end) = get_start_end(input);
 
     // implement breath first search from end node to first a
     let mut queue: VecDeque<(i32, i32, i32)> = VecDeque::new();
     let mut visited: HashSet<(i32, i32)> = HashSet::new();
     queue.push_back((end.0, end.1, 0));
+    visited.insert(end);
 
     while !queue.is_empty() {
         let current = queue.pop_front().unwrap();
+        // println!("{:?}: {}", current, map[current.0 as usize][current.1 as usize]);
         if map[current.0 as usize][current.1 as usize] == 0 {
             return Some(current.2);
         }
-        visited.insert((current.0, current.1));
+
         // loop over sucessors
         for dir in &[(0, 1), (1, 0), (0, -1), (-1, 0)] {
             let new_pos = (current.0 + dir.0, current.1 + dir.1);
+            // println!("nieuw: {:?}", new_pos);
             // check if position is on map
             if new_pos.0 < 0
                 || new_pos.0 >= map.len().try_into().unwrap()
@@ -170,26 +151,106 @@ pub fn part_two(input: &str) -> Option<i32> {
                 continue;
             }
             // check if position is not more than 1 heigher or lower
+            // dbg!(map[new_pos.0 as usize][new_pos.1 as usize],  map[current.0 as usize][current.1 as usize]);
             if (map[new_pos.0 as usize][new_pos.1 as usize]
                 - map[current.0 as usize][current.1 as usize])
                 .abs()
                 > 1
             {
                 continue;
+                
             }
             if !visited.contains(&new_pos) {
+                // println!("added");
+
                 queue.push_back((new_pos.0, new_pos.1, current.2+1));
+                visited.insert(new_pos);
+            }
+        }
+    }
+    dbg!(visited.len(), map.len()*map[0].len());
+    None
+}
+
+pub fn part_two2(input: &str) -> Option<i32> {
+    let map = process_input(input);
+    let (_, end) = get_start_end(input);
+
+    // apply alpha star search
+    let mut open: Vec<Node> = vec![];
+    let mut closed: Vec<Node> = vec![];
+
+    for i in 0..map.len() {
+        for j in 0..map[0].len() {
+            if map[i][j] == 0 {
+                open.push(Node {
+                    g: 0,
+                    h: manhatten_dist((i as i32, j as i32), end),
+                    pos: (i as i32, j as i32),
+                    height: 0,
+                })
             }
         }
     }
 
+    while !open.is_empty() {
+        open.sort_by_key(|n| -(n.g + n.h));
+        let node_f = open.pop().unwrap();
+        if node_f.pos == end {
+            // dbg!("Found the end!");
+            return Some(node_f.g);
+        }
+
+        // loop over sucessors
+        for dir in &[(0, 1), (1, 0), (0, -1), (-1, 0)] {
+            let new_pos = (node_f.pos.0 + dir.0, node_f.pos.1 + dir.1);
+            // check if position is on map
+            if new_pos.0 < 0
+                || new_pos.0 >= map.len().try_into().unwrap()
+                || new_pos.1 < 0
+                || new_pos.1 >= map[0].len().try_into().unwrap()
+            {
+                continue;
+            }
+            // check if position is not more then 1 heigher
+            let height_new = map[new_pos.0 as usize][new_pos.1 as usize];
+            if height_new > node_f.height + 1 {
+                continue;
+            }
+
+            let new_node = Node {
+                g: node_f.g + 1,
+                h: manhatten_dist(new_pos, end),
+                // parent: Some(Rc::new(node_f)),
+                pos: new_pos,
+                height: height_new,
+            };
+            // check if we do not already have a node with a lower value in open or closed
+            let mut is_lowest = true;
+            for n in &open {
+                if n.pos == new_node.pos && n.g <= new_node.g {
+                    is_lowest = false;
+                }
+            }
+            for n in &closed {
+                if n.pos == new_node.pos && n.g <= new_node.g {
+                    is_lowest = false;
+                }
+            }
+            if !is_lowest {
+                continue;
+            }
+            open.push(new_node);
+        }
+        closed.push(node_f);
+    }
     None
 }
 
 fn main() {
     let input = &advent_of_code::read_file("inputs", 12);
     advent_of_code::solve!(1, part_one, input);
-    advent_of_code::solve!(2, part_two, input);
+    advent_of_code::solve!(2, part_two2, input);
 }
 
 #[cfg(test)]
@@ -205,6 +266,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 12);
-        assert_eq!(part_two(&input), Some(29));
+        assert_eq!(part_two2(&input), Some(29));
     }
 }
