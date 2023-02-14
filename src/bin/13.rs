@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use serde_json::{json, Value};
+use serde_json::{Value};
 
 // returns true if to packets are in the right order
 fn packets_in_order(packet1: &Value, packet2: &Value) -> Ordering {
@@ -50,7 +50,7 @@ pub fn part_one(input: &str) -> Option<i32> {
         .split("\n\n")
         .enumerate()
         .map(|(i, lines)| -> i32 {
-            let (left, right) = lines.split_once("\n").unwrap();
+            let (left, right) = lines.split_once('\n').unwrap();
             // dbg!(left, right);
             let a: Value = serde_json::from_str(left).unwrap();
             let b: Value = serde_json::from_str(right).unwrap();
@@ -58,11 +58,11 @@ pub fn part_one(input: &str) -> Option<i32> {
             if Ordering::Less == packets_in_order(&a, &b) {
                 return (i + 1).try_into().unwrap();
             }
-            0 as i32
+            0_i32
         })
         .sum();
 
-    return Some(sum_result);
+    Some(sum_result)
 }
 
 pub fn part_two(input: &str) -> Option<i32> {
