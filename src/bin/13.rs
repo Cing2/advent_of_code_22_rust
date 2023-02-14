@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use serde_json::{Value};
+use serde_json::Value;
 
 // returns true if to packets are in the right order
 fn packets_in_order(packet1: &Value, packet2: &Value) -> Ordering {
