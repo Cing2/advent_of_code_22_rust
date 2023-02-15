@@ -4,8 +4,6 @@ use serde_json::Value;
 
 // returns true if to packets are in the right order
 fn packets_in_order(packet1: &Value, packet2: &Value) -> Ordering {
-    // dbg!(packet1, packet2);
-
     if packet1.is_number() {
         if packet2.is_number() {
             if packet1.as_i64() < packet2.as_i64() {
@@ -78,10 +76,6 @@ pub fn part_two(input: &str) -> Option<i32> {
     packets.push(dividers[1].clone());
 
     packets.sort_by(packets_in_order);
-    // dbg!("Sorted", &packets);
-    // for p in packets {
-    //     dbg!(serde_json::to_string(&p));
-    // }
 
     packets
         .iter()
@@ -93,8 +87,6 @@ pub fn part_two(input: &str) -> Option<i32> {
             None
         })
         .reduce(|a, b| a * b)
-
-    // None
 }
 
 fn main() {
