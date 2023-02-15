@@ -29,10 +29,10 @@ fn parse_input(input: &str) -> (i32, Array2<i8>) {
         .unwrap();
     let max_y = pos.iter().flatten().map(|a| a.1).max().unwrap();
 
-    dbg!(&min_max);
     let size_array = Dim([(max_y + 1) as usize, (min_max.1 - min_max.0 + 1) as usize]);
+
     // make matrix
-    dbg!(&size_array);
+    // dbg!(&size_array);
     let mut scan_matrix = Array2::<i8>::zeros(size_array);
 
     for row in pos {
@@ -51,25 +51,26 @@ fn parse_input(input: &str) -> (i32, Array2<i8>) {
             // dbg!(a);
         }
     }
+    // last row is filled interly
+    scan_matrix.slice_axis_mut(Axis(1), ..)
 
-    println!("{:?}", &scan_matrix);
-    println!("{:?}", &scan_matrix[[9, 0]]);
+    // println!("{:?}", &scan_matrix);
     (min_max.0, scan_matrix)
 }
 
 pub fn part_one(input: &str) -> Option<i32> {
     let (min_x, mut cave) = parse_input(input);
 
-    let spawn_position = (0 as usize, 500 - min_x as usize);
+    let spawn_position = (0_usize, 500 - min_x as usize);
     let mut sand_overflow = false;
     let mut sand_count = 0;
 
     // spawn sand
     while !sand_overflow {
-        let mut cur_pos = spawn_position.clone();
+        let mut cur_pos = spawn_position;
         // go lower
-        while true {
-            if cur_pos.0 + 1 > cave.nrows() {
+        loop {
+            if cur_pos.0 + 1 == cave.nrows() {
                 sand_overflow = true;
                 break;
             }
@@ -87,7 +88,7 @@ pub fn part_one(input: &str) -> Option<i32> {
                 cur_pos.1 -= 1;
                 continue;
             }
-            if cur_pos.1 + 1 > cave.ncols() {
+            if cur_pos.1 +1 == cave.ncols() {
                 // sand overflows to side
                 sand_overflow = true;
                 break;
@@ -103,13 +104,15 @@ pub fn part_one(input: &str) -> Option<i32> {
             break;
         }
     }
-    dbg!(&cave);
-    dbg!(&sand_count);
+    // dbg!(&cave);
+    // dbg!(&sand_count);
 
     Some(sand_count)
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
+
+
     None
 }
 
