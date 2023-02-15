@@ -28,8 +28,9 @@ fn parse_input(input: &str) -> (i32, Array2<i8>) {
         .into_option()
         .unwrap();
     let max_y = pos.iter().flatten().map(|a| a.1).max().unwrap();
+    let start_x = 500 - max_y - 10;
 
-    let size_array = Dim([(max_y + 1) as usize, (min_max.1 - min_max.0 + 1) as usize]);
+    let size_array = Dim([(max_y + 3) as usize, (max_y * 2 + 20) as usize]);
 
     // make matrix
     // dbg!(&size_array);
@@ -42,8 +43,8 @@ fn parse_input(input: &str) -> (i32, Array2<i8>) {
                 false => row[i].1..(row[i - 1].1 + 1),
             };
             let range2 = match row[i].0 > row[i - 1].0 {
-                true => (row[i - 1].0 - min_max.0)..(row[i].0 - min_max.0 + 1),
-                false => (row[i].0 - min_max.0)..(row[i - 1].0 - min_max.0 + 1),
+                true => (row[i - 1].0 - start_x)..(row[i].0 - start_x + 1),
+                false => (row[i].0 - start_x)..(row[i - 1].0 - start_x + 1),
             };
 
             // dbg!(&row[i-1..i+1], &range1, &range2);
@@ -52,15 +53,13 @@ fn parse_input(input: &str) -> (i32, Array2<i8>) {
         }
     }
     // last row is filled interly
-    scan_matrix.slice_axis_mut(Axis(1), ..)
+    // dbg!(&scan_matrix);
 
     // println!("{:?}", &scan_matrix);
-    (min_max.0, scan_matrix)
+    (start_x, scan_matrix)
 }
 
-pub fn part_one(input: &str) -> Option<i32> {
-    let (min_x, mut cave) = parse_input(input);
-
+fn simulate_sand(mut cave: Array2<i8>, min_x: i32) -> i32 {
     let spawn_position = (0_usize, 500 - min_x as usize);
     let mut sand_overflow = false;
     let mut sand_count = 0;
@@ -70,6 +69,11 @@ pub fn part_one(input: &str) -> Option<i32> {
         let mut cur_pos = spawn_position;
         // go lower
         loop {
+            if cur_pos == spawn_position && cave[cur_pos] == 1{
+                sand_overflow = true;
+                // println!("overflow top");
+                break;
+            }
             if cur_pos.0 + 1 == cave.nrows() {
                 sand_overflow = true;
                 break;
@@ -81,6 +85,7 @@ pub fn part_one(input: &str) -> Option<i32> {
             if cur_pos.1 == 0 {
                 // sand overflows to side
                 sand_overflow = true;
+                // println!("overflow to side");
                 break;
             }
             if cave[[cur_pos.0 + 1, cur_pos.1 - 1]] == 0 {
@@ -88,9 +93,10 @@ pub fn part_one(input: &str) -> Option<i32> {
                 cur_pos.1 -= 1;
                 continue;
             }
-            if cur_pos.1 +1 == cave.ncols() {
+            if cur_pos.1 + 1 == cave.ncols() {
                 // sand overflows to side
                 sand_overflow = true;
+                // println!("overflow to side");
                 break;
             }
             if cave[[cur_pos.0 + 1, cur_pos.1 + 1]] == 0 {
@@ -105,15 +111,24 @@ pub fn part_one(input: &str) -> Option<i32> {
         }
     }
     // dbg!(&cave);
-    // dbg!(&sand_count);
 
-    Some(sand_count)
+    sand_count
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
+pub fn part_one(input: &str) -> Option<i32> {
+    let (min_x, cave) = parse_input(input);
 
+    Some(simulate_sand(cave, min_x))
+}
 
-    None
+pub fn part_two(input: &str) -> Option<i32> {
+    let (min_x, mut cave) = parse_input(input);
+
+    cave.slice_mut(s![cave.nrows() - 1, ..]).fill(1);
+    // dbg!(&cave);
+
+    Some(simulate_sand(cave, min_x))
+    // None
 }
 
 fn main() {
@@ -135,6 +150,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 14);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(93));
     }
 }
