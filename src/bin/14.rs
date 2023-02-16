@@ -20,20 +20,12 @@ fn parse_input(input: &str) -> (i32, Array2<i8>) {
         })
         .collect();
 
-    let min_max = pos
-        .iter()
-        .flatten()
-        .map(|a| a.0)
-        .minmax()
-        .into_option()
-        .unwrap();
     let max_y = pos.iter().flatten().map(|a| a.1).max().unwrap();
     let start_x = 500 - max_y - 10;
 
     let size_array = Dim([(max_y + 3) as usize, (max_y * 2 + 20) as usize]);
 
     // make matrix
-    // dbg!(&size_array);
     let mut scan_matrix = Array2::<i8>::zeros(size_array);
 
     for row in pos {
@@ -47,15 +39,10 @@ fn parse_input(input: &str) -> (i32, Array2<i8>) {
                 false => (row[i].0 - start_x)..(row[i - 1].0 - start_x + 1),
             };
 
-            // dbg!(&row[i-1..i+1], &range1, &range2);
             scan_matrix.slice_mut(s![range1, range2]).fill(1);
-            // dbg!(a);
         }
     }
-    // last row is filled interly
-    // dbg!(&scan_matrix);
 
-    // println!("{:?}", &scan_matrix);
     (start_x, scan_matrix)
 }
 
@@ -71,7 +58,6 @@ fn simulate_sand(mut cave: Array2<i8>, min_x: i32) -> i32 {
         loop {
             if cur_pos == spawn_position && cave[cur_pos] == 1{
                 sand_overflow = true;
-                // println!("overflow top");
                 break;
             }
             if cur_pos.0 + 1 == cave.nrows() {
@@ -85,7 +71,6 @@ fn simulate_sand(mut cave: Array2<i8>, min_x: i32) -> i32 {
             if cur_pos.1 == 0 {
                 // sand overflows to side
                 sand_overflow = true;
-                // println!("overflow to side");
                 break;
             }
             if cave[[cur_pos.0 + 1, cur_pos.1 - 1]] == 0 {
@@ -96,7 +81,6 @@ fn simulate_sand(mut cave: Array2<i8>, min_x: i32) -> i32 {
             if cur_pos.1 + 1 == cave.ncols() {
                 // sand overflows to side
                 sand_overflow = true;
-                // println!("overflow to side");
                 break;
             }
             if cave[[cur_pos.0 + 1, cur_pos.1 + 1]] == 0 {
