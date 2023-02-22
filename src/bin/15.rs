@@ -1,9 +1,8 @@
 extern crate ndarray;
 
-use ndarray::prelude::*;
-use std::collections::HashSet;
-
 use regex::Regex;
+// use std::collections::HashSet;
+use hashbrown::HashSet;
 
 fn parse_sensors(input: &str) -> Vec<((i32, i32), (i32, i32))> {
     let re =
@@ -23,7 +22,7 @@ fn parse_sensors(input: &str) -> Vec<((i32, i32), (i32, i32))> {
     sensors
 }
 
-fn manhatten_dist(a: (i32, i32), b: (i32, i32)) -> i32 {
+fn manhatten_dist(a: &(i32, i32), b: &(i32, i32)) -> i32 {
     (a.0 - b.0).abs() + (a.1 - b.1).abs()
 }
 
@@ -32,18 +31,17 @@ pub fn part_one(input: &str) -> Option<i32> {
     let mut set_positions = HashSet::new();
     let mut beacon_positions = HashSet::new();
 
-    let check_line = 2000000;
-    // let check_line = 10;
+    let check_line = if cfg!(test) { 10 } else { 2000000 };
 
     for (sensor, beacon) in sensors {
         // if beacon is on line add it to set
         if beacon.1 == check_line {
             beacon_positions.insert(beacon);
         }
-        let dist_beacon = manhatten_dist(sensor, beacon);
+        let dist_beacon = manhatten_dist(&sensor, &beacon);
         // get closest postion to the line to check, which is the x position on the line
         let line_pos = (sensor.0, check_line);
-        let dist_line = manhatten_dist(sensor, line_pos);
+        let dist_line = manhatten_dist(&sensor, &line_pos);
         if dist_line > dist_beacon {
             // beacon is not close enough to check line
             continue;
@@ -53,7 +51,7 @@ pub fn part_one(input: &str) -> Option<i32> {
         let mut off_set = 0;
         loop {
             off_set += 1;
-            if manhatten_dist(sensor, (line_pos.0 + off_set, line_pos.1)) > dist_beacon {
+            if manhatten_dist(&sensor, &(line_pos.0 + off_set, line_pos.1)) > dist_beacon {
                 break;
             }
             // add both sides
@@ -70,43 +68,30 @@ pub fn part_one(input: &str) -> Option<i32> {
 pub fn part_two(input: &str) -> Option<i32> {
     let sensors = parse_sensors(input);
 
-    let max_range = 4_000_000;
-    // let max_range = 20;
+    // add sensor distances
+    let sensors_dist: Vec<((i32, i32), i32)> = sensors
+        .iter()
+        .map(|(s, b)| (*s, manhatten_dist(s, b)))
+        .collect();
 
-    // create array of sensor ranges
-    let mut beacon_converage = Array2::<i8>::zeros((max_range, max_range));
-    for (sensor, beacon) in sensors {
-        let dist_beacon = manhatten_dist(sensor, beacon);
-        println!("doing sensor {sensor:?}, {dist_beacon:?}");
-        // fill the beacon coverage with the diamon of the sensor
-        for i in 0..(dist_beacon + 1) {
-            // dbg!(top_range, bottom_range);
-            if sensor.1 + i < (max_range as i32) {
-                let top_range = s![
-                    sensor.1 + i,
-                    (sensor.0 - dist_beacon + i).max(0)
-                        ..(sensor.0 + dist_beacon - i + 1).min(max_range as i32)
-                ];
-                // println!("Top: {:?}", top_range.as_slice());
-                beacon_converage.slice_mut(top_range).fill(1);
+    let max_range = if cfg!(test) { 20 } else { 4_000_000 };
+
+    for i in 0..max_range {
+        for j in 0..max_range {
+            // check if position is in range of a sensor
+            let mut in_range = false;
+            for (sensor, dist) in &sensors_dist {
+                if manhatten_dist(&(i, j), &sensor) <= *dist {
+                    in_range = true;
+                    break;
+                }
             }
-            if sensor.1 - i >= 0 && sensor.1 - i < (max_range as i32) {
-                let bottom_range = s![
-                    sensor.1 - i,
-                    (sensor.0 - dist_beacon + i).max(0)
-                        ..(sensor.0 + dist_beacon - i + 1).min(max_range as i32)
-                ];
-                // println!("Bottom: {:?}", bottom_range.as_slice());
-                beacon_converage.slice_mut(bottom_range).fill(1);
+            if !in_range {
+                // found place no sensor reaches
+                dbg!("Found it!", i, j);
+                return Some(i * 4_000_000 + j);
             }
         }
-    }
-    // dbg!(&beacon_converage);
-
-    if let Some(num) = beacon_converage.iter().position(|a| a == &0) {
-        let (x, y) = ((num % max_range) as i32, (num / max_range) as i32);
-        dbg!(x, y);
-        return Some(x* 4_000_000 + y);
     }
 
     None
