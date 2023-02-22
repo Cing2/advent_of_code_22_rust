@@ -1,6 +1,5 @@
 extern crate ndarray;
 
-use sprs::CsMat;
 use ndarray::prelude::*;
 use std::collections::HashSet;
 
@@ -75,7 +74,7 @@ pub fn part_two(input: &str) -> Option<i32> {
     // let max_range = 20;
 
     // create array of sensor ranges
-    let mut beacon_converage = CsMat::new_csc((max_range, max_range));
+    let mut beacon_converage = Array2::<i8>::zeros((max_range, max_range));
     for (sensor, beacon) in sensors {
         let dist_beacon = manhatten_dist(sensor, beacon);
         println!("doing sensor {sensor:?}, {dist_beacon:?}");
