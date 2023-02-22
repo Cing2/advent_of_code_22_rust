@@ -1,11 +1,12 @@
 use std::collections::HashSet;
 
-use itertools::Itertools;
+use ndarray::Array2;
 use regex::Regex;
 
-fn parse_input(input: &str) -> Vec<((i32, i32), (i32, i32))> {
+fn parse_sensors(input: &str) -> Vec<((i32, i32), (i32, i32))> {
     let re =
-        Regex::new(r"Sensor at x=(\d+), y=(\d+): closest beacon is at x=(\d+), y=(\d+)").unwrap();
+        Regex::new(r"Sensor at x=(-*\d+), y=(-*\d+): closest beacon is at x=(-*\d+), y=(-*\d+)")
+            .unwrap();
     let sensors: Vec<((i32, i32), (i32, i32))> = re
         .captures_iter(input)
         .map(|cap| {
@@ -25,20 +26,21 @@ fn manhatten_dist(a: (i32, i32), b: (i32, i32)) -> i32 {
 }
 
 pub fn part_one(input: &str) -> Option<i32> {
-    let sensors = parse_input(input);
+    let sensors = parse_sensors(input);
     let mut set_positions = HashSet::new();
     let mut beacon_positions = HashSet::new();
 
     let check_line = 2000000;
-    let check_line = 10;
+    // let check_line = 10;
 
     for (sensor, beacon) in sensors {
+        // if beacon is on line add it to set
         if beacon.1 == check_line {
             beacon_positions.insert(beacon);
         }
         let dist_beacon = manhatten_dist(sensor, beacon);
-        // get closest distance to
-        let line_pos = (check_line, sensor.1);
+        // get closest postion to the line to check, which is the x position on the line
+        let line_pos = (sensor.0, check_line);
         let dist_line = manhatten_dist(sensor, line_pos);
         if dist_line > dist_beacon {
             // beacon is not close enough to check line
@@ -64,6 +66,14 @@ pub fn part_one(input: &str) -> Option<i32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
+    let sensors = parse_sensors(input);
+
+    let max_range = 400000;
+    let max_range = 20;
+
+    // create array of sensor ranges
+    let mut beacon_converage = Array2::<bool>::new();
+
     None
 }
 
