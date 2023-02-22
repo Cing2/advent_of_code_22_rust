@@ -77,18 +77,18 @@ pub fn part_two(input: &str) -> Option<i64> {
     let max_range = if cfg!(test) { 20 } else { 4_000_000 };
 
     for y in 0..max_range {
-        let mut x= 0;
+        let mut x = 0;
         while x < max_range {
             // check if position is in range of a sensor
             let mut in_range = false;
             for (sensor, dist) in &sensors_dist {
                 if manhatten_dist(&(x, y), sensor) <= *dist {
                     in_range = true;
-                    // calculate how far we can skip ahead, 
+                    // calculate how far we can skip ahead,
                     // start from x position of sensor and distance to the right accounted for height
                     // println!("y={y}: Skipping to {}", sensor.0 + dist - (y-sensor.1).abs());
-                    x = sensor.0 + dist - (y-sensor.1).abs();
-                    
+                    x = sensor.0 + dist - (y - sensor.1).abs();
+
                     break;
                 }
             }
@@ -100,7 +100,7 @@ pub fn part_two(input: &str) -> Option<i64> {
             x += 1;
         }
     }
-    
+
     None
 }
 
