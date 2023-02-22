@@ -56,7 +56,7 @@ fn simulate_sand(mut cave: Array2<i8>, min_x: i32) -> i32 {
         let mut cur_pos = spawn_position;
         // go lower
         loop {
-            if cur_pos == spawn_position && cave[cur_pos] == 1{
+            if cur_pos == spawn_position && cave[cur_pos] == 1 {
                 sand_overflow = true;
                 break;
             }
