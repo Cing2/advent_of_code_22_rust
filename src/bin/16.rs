@@ -39,7 +39,7 @@ fn simulate_valves(
     min_left: i32,
     at_valve_name: &str,
     open_valves: &Vec<&str>,
-    visited_valves_since_open: &Vec<&str>
+    visited_valves_since_open: &Vec<&str>,
 ) -> i32 {
     // do not allow to visited more then 5 files without opening
     if visited_valves_since_open.len() > 4 {
@@ -74,7 +74,7 @@ fn simulate_valves(
             min_left - 1,
             at_valve_name,
             &new_open_valves,
-            &vec![at_valve_name]
+            &vec![at_valve_name],
         )
     } else {
         0
@@ -93,11 +93,9 @@ fn simulate_valves(
                 min_left - 1,
                 next_valve,
                 &open_valves,
-                &new_visited_valves
+                &new_visited_valves,
             ));
-
         }
-
     }
 
     current_pressure + max_buildup_pressure
@@ -108,21 +106,112 @@ pub fn part_one(input: &str) -> Option<i32> {
 
     let nr_valves_with_pressure: usize = valves.iter().filter(|(_, v)| v.flow_rate > 0).count();
 
-    Some(simulate_valves(
+    let workers = vec![ValveWorker{ at_valve: "JJ", visited_valves_since_open: vec![] }];
+
+
+    Some(simulate_valves_elephant(
         &valves,
         nr_valves_with_pressure,
         30,
-        "AA",
         &vec![],
-        &vec![],
+        workers
     ))
-    // None
+}
+
+#[derive(Debug, Clone)]
+struct ValveWorker<'a> {
+    at_valve: &'a str,
+    visited_valves_since_open: Vec<&'a str>,
+}
+
+
+fn simulate_valves_elephant(
+    valves: &HashMap<&str, Valve>,
+    max_open_valves: usize,
+    min_left: i32,
+    open_valves: &Vec<&str>,
+    workers: Vec<ValveWorker>,
+) -> i32 {
+    if min_left == 0 {
+        return 0;
+    }
+    // building pressure on this minute
+    let current_pressure: i32 = open_valves
+        .iter()
+        .map(|v| valves.get(v).unwrap().flow_rate)
+        .sum();
+
+    // check if we have all valves open
+    if open_valves.len() == max_open_valves {
+        return current_pressure * min_left;
+    }
+
+    // for each possible value return the maximum
+    let mut max_buildup_pressure = 0;
+
+    for i in 0..workers.len() {
+        let worker = &workers[i];
+        // do not allow to visited more then 5 files without opening
+        if worker.visited_valves_since_open.len() > 4 {
+            return 0;
+        }
+
+        let current_valve = valves.get(worker.at_valve).unwrap();
+
+        // open current valve if possible
+        let opening_pressure =
+            if !open_valves.contains(&worker.at_valve) && current_valve.flow_rate > 0 {
+                let mut new_open_valves = open_valves.clone();
+                new_open_valves.push(worker.at_valve);
+                simulate_valves_elephant(
+                    valves,
+                    max_open_valves,
+                    min_left - 1,
+                    &new_open_valves,
+                    workers.clone(),
+                )
+            } else {
+                0
+            };
+        max_buildup_pressure = max_buildup_pressure.max(opening_pressure);
+
+        // move to new valves
+        for next_valve in &current_valve.leads_to {
+            // do not allow to loop back to valves if not opening one
+            if !worker.visited_valves_since_open.contains(next_valve) {
+                let mut new_workers = workers.clone();
+                new_workers[i].visited_valves_since_open.push(&next_valve);
+                new_workers[i].at_valve = next_valve;
+
+                max_buildup_pressure = max_buildup_pressure.max(simulate_valves_elephant(
+                    valves,
+                    max_open_valves,
+                    min_left - 1,
+                    &open_valves,
+                    new_workers,
+                ));
+            }
+        }
+    }
+
+    current_pressure + max_buildup_pressure
 }
 
 pub fn part_two(input: &str) -> Option<i32> {
     let valves = parse_input(input);
 
-    None
+    let nr_valves_with_pressure: usize = valves.iter().filter(|(_, v)| v.flow_rate > 0).count();
+
+    let workers = vec![ValveWorker{ at_valve: "JJ", visited_valves_since_open: vec![] }];
+
+
+    Some(simulate_valves_elephant(
+        &valves,
+        nr_valves_with_pressure,
+        30,
+        &vec![],
+        workers
+    ))
 }
 
 fn main() {
@@ -144,6 +233,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 16);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(1707));
     }
 }
