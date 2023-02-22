@@ -111,7 +111,6 @@ pub fn part_two(input: &str) -> Option<i32> {
     // dbg!(&cave);
 
     Some(simulate_sand(cave, min_x))
-    // None
 }
 
 fn main() {

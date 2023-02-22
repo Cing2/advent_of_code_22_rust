@@ -59,13 +59,13 @@ pub fn part_one(input: &str) -> Option<i32> {
             set_positions.insert((line_pos.0 - off_set, line_pos.1));
         }
     }
-    dbg!(set_positions.len());
-    dbg!(beacon_positions.len());
+    // dbg!(set_positions.len());
+    // dbg!(beacon_positions.len());
 
     Some((set_positions.len() - beacon_positions.len()) as i32)
 }
 
-pub fn part_two(input: &str) -> Option<i32> {
+pub fn part_two(input: &str) -> Option<i64> {
     let sensors = parse_sensors(input);
 
     // add sensor distances
@@ -76,24 +76,31 @@ pub fn part_two(input: &str) -> Option<i32> {
 
     let max_range = if cfg!(test) { 20 } else { 4_000_000 };
 
-    for i in 0..max_range {
-        for j in 0..max_range {
+    for y in 0..max_range {
+        let mut x= 0;
+        while x < max_range {
             // check if position is in range of a sensor
             let mut in_range = false;
             for (sensor, dist) in &sensors_dist {
-                if manhatten_dist(&(i, j), &sensor) <= *dist {
+                if manhatten_dist(&(x, y), sensor) <= *dist {
                     in_range = true;
+                    // calculate how far we can skip ahead, 
+                    // start from x position of sensor and distance to the right accounted for height
+                    // println!("y={y}: Skipping to {}", sensor.0 + dist - (y-sensor.1).abs());
+                    x = sensor.0 + dist - (y-sensor.1).abs();
+                    
                     break;
                 }
             }
             if !in_range {
                 // found place no sensor reaches
-                dbg!("Found it!", i, j);
-                return Some(i * 4_000_000 + j);
+                // dbg!("Found it!", y, x);
+                return Some(x as i64 * 4_000_000 + y as i64);
             }
+            x += 1;
         }
     }
-
+    
     None
 }
 
