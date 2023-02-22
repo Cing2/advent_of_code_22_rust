@@ -1,6 +1,9 @@
+extern crate ndarray;
+
+use sprs::CsMat;
+use ndarray::prelude::*;
 use std::collections::HashSet;
 
-use ndarray::Array2;
 use regex::Regex;
 
 fn parse_sensors(input: &str) -> Vec<((i32, i32), (i32, i32))> {
@@ -65,14 +68,47 @@ pub fn part_one(input: &str) -> Option<i32> {
     Some((set_positions.len() - beacon_positions.len()) as i32)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
+pub fn part_two(input: &str) -> Option<i32> {
     let sensors = parse_sensors(input);
 
-    let max_range = 400000;
-    let max_range = 20;
+    let max_range = 4_000_000;
+    // let max_range = 20;
 
     // create array of sensor ranges
-    let mut beacon_converage = Array2::<bool>::new();
+    let mut beacon_converage = CsMat::new_csc((max_range, max_range));
+    for (sensor, beacon) in sensors {
+        let dist_beacon = manhatten_dist(sensor, beacon);
+        println!("doing sensor {sensor:?}, {dist_beacon:?}");
+        // fill the beacon coverage with the diamon of the sensor
+        for i in 0..(dist_beacon + 1) {
+            // dbg!(top_range, bottom_range);
+            if sensor.1 + i < (max_range as i32) {
+                let top_range = s![
+                    sensor.1 + i,
+                    (sensor.0 - dist_beacon + i).max(0)
+                        ..(sensor.0 + dist_beacon - i + 1).min(max_range as i32)
+                ];
+                // println!("Top: {:?}", top_range.as_slice());
+                beacon_converage.slice_mut(top_range).fill(1);
+            }
+            if sensor.1 - i >= 0 && sensor.1 - i < (max_range as i32) {
+                let bottom_range = s![
+                    sensor.1 - i,
+                    (sensor.0 - dist_beacon + i).max(0)
+                        ..(sensor.0 + dist_beacon - i + 1).min(max_range as i32)
+                ];
+                // println!("Bottom: {:?}", bottom_range.as_slice());
+                beacon_converage.slice_mut(bottom_range).fill(1);
+            }
+        }
+    }
+    // dbg!(&beacon_converage);
+
+    if let Some(num) = beacon_converage.iter().position(|a| a == &0) {
+        let (x, y) = ((num % max_range) as i32, (num / max_range) as i32);
+        dbg!(x, y);
+        return Some(x* 4_000_000 + y);
+    }
 
     None
 }
@@ -96,6 +132,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 15);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(56000011));
     }
 }

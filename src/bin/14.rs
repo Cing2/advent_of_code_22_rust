@@ -1,4 +1,3 @@
-use itertools::Itertools;
 extern crate ndarray;
 
 use ndarray::prelude::*;
