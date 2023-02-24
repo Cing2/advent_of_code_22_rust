@@ -56,11 +56,11 @@ fn simulate_valves(
         return 0;
     }
 
-    let current_valve = valves.get(&at_valve_name).unwrap();
+    // let current_valve = valves[&at_valve_name];
     // update the current pressure
     let current_pressure: i32 = open_valves
         .iter()
-        .map(|v| valves.get(v).unwrap().flow_rate)
+        .map(|v| valves[v].flow_rate)
         .sum();
 
     // check if we have all valves open
@@ -73,7 +73,7 @@ fn simulate_valves(
 
     // open current valve if possible
     let mut opening_pressure = 0;
-    if !open_valves.contains(&at_valve_name) && current_valve.flow_rate > 0 {
+    if !open_valves.contains(&at_valve_name) && valves[&at_valve_name].flow_rate > 0 {
         open_valves.push(at_valve_name);
         opening_pressure = simulate_valves(
             valves,
@@ -89,9 +89,9 @@ fn simulate_valves(
     max_buildup_pressure = max_buildup_pressure.max(opening_pressure);
 
     // move to new valves
-    for next_valve in &current_valve.leads_to {
+    for next_valve in &valves[&at_valve_name].leads_to {
         // do not allow to loop back to valves if not opening one
-        if !visited_valves_since_open.contains(next_valve) {
+        if !visited_valves_since_open.contains(&next_valve) {
             let mut new_visited_valves = visited_valves_since_open.clone();
             new_visited_valves.push(at_valve_name);
             max_buildup_pressure = max_buildup_pressure.max(simulate_valves(
