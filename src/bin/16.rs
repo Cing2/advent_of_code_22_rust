@@ -154,34 +154,7 @@ pub fn part_one(input: &str) -> Option<i32> {
     Some(pressure)
 }
 
-fn simulate_valves_order_elephant(
-    network: &Network,
-    path_lengths: &PathLengths,
-    valve_order: Vec<&Name>,
-) -> i32 {
-    let mut total_pressure = 0;
-    let mut time_remaining = 30;
-    let mut pos = Name::from_str("AA");
-
-    for valve in valve_order {
-        if valve == &Name::from_str("AA") || valve == &pos {
-            continue;
-        }
-        // dbg!((pos, *valve));
-        let cost_next_valve = path_lengths[&(pos, *valve)] + 1;
-        if cost_next_valve < time_remaining {
-            // move to valve and open
-            time_remaining -= cost_next_valve;
-            total_pressure += time_remaining * network.valves[valve].flow_rate;
-            pos = *valve;
-        } else {
-            break;
-        }
-    }
-
-    total_pressure
-}
-
+#[allow(clippy::too_many_arguments)]
 fn simulate_valves_elephant(
     network: &Network,
     path_lengths: &PathLengths,
