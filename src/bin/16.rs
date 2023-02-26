@@ -1,21 +1,45 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
+
+use hashbrown::HashSet;
+use itertools::Itertools;
 
 use regex::Regex;
 
-type ValveKey = [char; 2];
+// type Name = [char; 2];
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+struct Name([char; 2]);
+
+impl Name {
+    fn from_str(input: &str) -> Self {
+        Name([input.chars().nth(0).unwrap(), input.chars().nth(1).unwrap()])
+    }
+}
 
 #[derive(Debug)]
 struct Valve {
     flow_rate: i32,
-    leads_to: Vec<ValveKey>,
+    leads_to: Vec<Name>,
 }
 
-fn valvekey_from_str(input: &str) -> ValveKey {
-    [input.chars().nth(0).unwrap(), input.chars().nth(1).unwrap()] as ValveKey
+struct Network {
+    valves: HashMap<Name, Valve>,
 }
 
-fn parse_input(input: &str) -> HashMap<ValveKey, Valve> {
-    let mut valves: HashMap<ValveKey, Valve> = HashMap::new();
+impl Network {
+    fn list_non_zero_valves(&self) -> Vec<Name> {
+        self.valves
+            .iter()
+            .filter_map(|(n, v)| match v.flow_rate > 0 {
+                true => Some(n.clone()),
+                false => None,
+            })
+            .sorted()
+            .collect_vec()
+    }
+}
+
+fn parse_input(input: &str) -> Network {
+    let mut valves: HashMap<Name, Valve> = HashMap::new();
 
     let re = Regex::new(r"Valve (?P<name>\w+) has flow rate=(?P<rate>\d+); tunnels* leads* to valves* (?P<valves>.*)").unwrap();
 
@@ -26,108 +50,270 @@ fn parse_input(input: &str) -> HashMap<ValveKey, Valve> {
             .as_str()
             .split(",")
             .map(str::trim)
-            .map(valvekey_from_str)
+            .map(Name::from_str)
             .collect();
         let new_valve = Valve {
             flow_rate: cap.name("rate").unwrap().as_str().parse::<i32>().unwrap(),
             leads_to: to_valves,
         };
         let name = cap.name("name").unwrap().as_str();
-        valves.insert(valvekey_from_str(name), new_valve);
+        valves.insert(Name::from_str(name), new_valve);
     }
 
     // dbg!(&valves);
-    valves
+    Network { valves: valves }
 }
 
 fn simulate_valves(
-    valves: &HashMap<ValveKey, Valve>,
-    max_open_valves: usize,
+    network: &Network,
+    path_lengths: &PathLengths,
+    pressure_valves: &Vec<Name>,
     min_left: i32,
-    at_valve_name: ValveKey,
-    open_valves: &mut Vec<ValveKey>,
-    visited_valves_since_open: &Vec<ValveKey>,
+    at_valve: Name,
+    open_valves: &mut Vec<Name>,
+    current_pressure: i32,
 ) -> i32 {
-    // do not allow to visited more then 5 files without opening
-    if visited_valves_since_open.len() > 5 {
-        return 0;
-    }
     if min_left == 0 {
         return 0;
     }
-
-    // let current_valve = valves[&at_valve_name];
-    // update the current pressure
-    let current_pressure: i32 = open_valves
-        .iter()
-        .map(|v| valves[v].flow_rate)
-        .sum();
-
-    // check if we have all valves open
-    if open_valves.len() == max_open_valves {
-        return current_pressure * min_left;
-    }
-
-    // for each possible value return the maximum
+    // for each possible valve return the maximum
     let mut max_buildup_pressure = 0;
 
-    // open current valve if possible
-    let mut opening_pressure = 0;
-    if !open_valves.contains(&at_valve_name) && valves[&at_valve_name].flow_rate > 0 {
-        open_valves.push(at_valve_name);
-        opening_pressure = simulate_valves(
-            valves,
-            max_open_valves,
-            min_left - 1,
-            at_valve_name,
-            open_valves,
-            &vec![at_valve_name],
-        );
-        open_valves.pop();
-        
-    }
-    max_buildup_pressure = max_buildup_pressure.max(opening_pressure);
-
-    // move to new valves
-    for next_valve in &valves[&at_valve_name].leads_to {
-        // do not allow to loop back to valves if not opening one
-        if !visited_valves_since_open.contains(&next_valve) {
-            let mut new_visited_valves = visited_valves_since_open.clone();
-            new_visited_valves.push(at_valve_name);
+    // move to next valve and open
+    for next_valve in pressure_valves {
+        // do not open valve that are already open and check if we still have time to open it
+        if !open_valves.contains(&next_valve) && path_lengths[&(at_valve, *next_valve)] < min_left {
+            // open valve and add pressure
+            open_valves.push(*next_valve);
+            let time_left = min_left - path_lengths[&(at_valve, *next_valve)] - 1; // n for walking and 1 for opening
             max_buildup_pressure = max_buildup_pressure.max(simulate_valves(
-                valves,
-                max_open_valves,
-                min_left - 1,
+                network,
+                path_lengths,
+                pressure_valves,
+                time_left,
                 *next_valve,
                 open_valves,
-                &new_visited_valves,
+                network.valves[next_valve].flow_rate * time_left,
             ));
+            open_valves.pop();
         }
     }
 
     current_pressure + max_buildup_pressure
 }
 
-pub fn part_one(input: &str) -> Option<i32> {
-    let valves = parse_input(input);
+type PathLengths = HashMap<(Name, Name), i32>;
 
-    let nr_valves_with_pressure: usize = valves.iter().filter(|(_, v)| v.flow_rate > 0).count();
-    let mut open_valves = vec![];
-    Some(simulate_valves(
-        &valves,
-        nr_valves_with_pressure,
+fn length_paths_valves(network: &Network, valves: &Vec<Name>) -> PathLengths {
+    let mut path_lengths: PathLengths = Default::default();
+
+    // for each node to breadth first search to get the distance to all nodes
+    for root in valves {
+        let mut queue: VecDeque<(Name, i32)> = Default::default();
+        let mut visited: HashSet<Name> = HashSet::new();
+        visited.insert(*root);
+        queue.push_back((*root, 0));
+        while !queue.is_empty() {
+            let valve = queue.pop_front().unwrap();
+            for other in &network.valves[&valve.0].leads_to {
+                if !visited.contains(other) {
+                    visited.insert(*other);
+                    queue.push_back((*other, valve.1 + 1));
+                    if valves.contains(other) && !path_lengths.contains_key(&(*root, *other)) {
+                        path_lengths.insert((*root, *other), valve.1 + 1);
+                    }
+                }
+            }
+        }
+    }
+    path_lengths
+}
+
+fn simulate_valves_order(
+    network: &Network,
+    path_lengths: &PathLengths,
+    valve_order: Vec<&Name>,
+) -> i32 {
+    let mut total_pressure = 0;
+    let mut time_remaining = 30;
+    let mut pos = Name::from_str("AA");
+
+    for valve in valve_order {
+        if valve == &Name::from_str("AA") || valve == &pos {
+            continue;
+        }
+        let cost_next_valve = path_lengths[&(pos, *valve)] + 1;
+        if cost_next_valve < time_remaining {
+            // move to valve and open
+            time_remaining -= cost_next_valve;
+            total_pressure += time_remaining * network.valves[valve].flow_rate;
+            pos = *valve;
+        } else {
+            break;
+        }
+    }
+
+    total_pressure
+}
+
+pub fn factorial(num: i32) -> i32 {
+    (1..=num).product()
+}
+
+pub fn part_one(input: &str) -> Option<i32> {
+    let network = parse_input(input);
+
+    let pressure_valves: Vec<Name> = network.list_non_zero_valves();
+    let mut pressure_valves_AA = pressure_valves.clone();
+    pressure_valves_AA.push(Name::from_str("AA"));
+
+    // println!("{:?}", &pressure_valves);
+    let path_lengths: PathLengths = length_paths_valves(&network, &pressure_valves_AA);
+    // println!("{:?}", &path_lengths);
+    dbg!(pressure_valves.len());
+    println!("{:?}", &pressure_valves);
+    dbg!(factorial(pressure_valves.len() as i32));
+
+    let pressure = simulate_valves(
+        &network,
+        &path_lengths,
+        &pressure_valves,
         30,
-        valvekey_from_str("AA"),
-        &mut open_valves,
-        &vec![],
-    ))
-    // None
+        Name::from_str("AA"),
+        &mut vec![],
+        0,
+    );
+    Some(pressure)
+    // let mut max_pressure = 0;
+    // for perm in pressure_valves.iter().permutations(pressure_valves.len()) {
+    //     max_pressure = max_pressure.max(simulate_valves_order(&network, &path_lengths, perm));
+    // }
+
+    // Some(max_pressure)
+}
+
+fn simulate_valves_order_elephant(
+    network: &Network,
+    path_lengths: &PathLengths,
+    valve_order: Vec<&Name>,
+) -> i32 {
+    let mut total_pressure = 0;
+    let mut time_remaining = 30;
+    let mut pos = Name::from_str("AA");
+
+    for valve in valve_order {
+        if valve == &Name::from_str("AA") || valve == &pos {
+            continue;
+        }
+        // dbg!((pos, *valve));
+        let cost_next_valve = path_lengths[&(pos, *valve)] + 1;
+        if cost_next_valve < time_remaining {
+            // move to valve and open
+            time_remaining -= cost_next_valve;
+            total_pressure += time_remaining * network.valves[valve].flow_rate;
+            pos = *valve;
+        } else {
+            break;
+        }
+    }
+
+    total_pressure
+}
+
+fn simulate_valves_elephant(
+    network: &Network,
+    path_lengths: &PathLengths,
+    pressure_valves: &Vec<Name>,
+    min_left: i32,
+    at_valve: Name,
+    elephant_min: i32,
+    elephant_valve: Name,
+    open_valves: &mut Vec<Name>,
+    current_pressure: i32,
+) -> i32 {
+    if min_left == 0 {
+        return 0;
+    }
+    // for each possible value return the maximum
+    let mut max_buildup_pressure = 0;
+
+    // which to check first
+    if min_left >= elephant_min {
+        // move to next valve and open
+        for next_valve in pressure_valves {
+            // do not open valve that are already open and check if we still have time to open it
+            if !open_valves.contains(&next_valve)
+                && path_lengths[&(at_valve, *next_valve)] < min_left
+            {
+                // open valve and add pressure
+                open_valves.push(*next_valve);
+                let time_left = min_left - path_lengths[&(at_valve, *next_valve)] - 1; // n for walking and 1 for opening
+                max_buildup_pressure = max_buildup_pressure.max(simulate_valves_elephant(
+                    network,
+                    path_lengths,
+                    pressure_valves,
+                    time_left,
+                    *next_valve,
+                    elephant_min,
+                    elephant_valve,
+                    open_valves,
+                    network.valves[next_valve].flow_rate * time_left,
+                ));
+                open_valves.pop();
+            }
+        }
+    } else {
+        // elephant turn
+        // move to next valve and open
+        for next_valve in pressure_valves {
+            // do not open valve that are already open and check if we still have time to open it
+            if !open_valves.contains(&next_valve)
+                && path_lengths[&(elephant_valve, *next_valve)] < elephant_min
+            {
+                // open valve and add pressure
+                open_valves.push(*next_valve);
+                let time_left = elephant_min - path_lengths[&(elephant_valve, *next_valve)] - 1; // n for walking and 1 for opening
+                max_buildup_pressure = max_buildup_pressure.max(simulate_valves_elephant(
+                    network,
+                    path_lengths,
+                    pressure_valves,
+                    min_left,
+                    at_valve,
+                    time_left,
+                    *next_valve,
+                    open_valves,
+                    network.valves[next_valve].flow_rate * time_left,
+                ));
+                open_valves.pop();
+            }
+        }
+    }
+
+    current_pressure + max_buildup_pressure
 }
 
 pub fn part_two(input: &str) -> Option<i32> {
-    let valves = parse_input(input);
+    let network = parse_input(input);
 
-    None
+    let pressure_valves: Vec<Name> = network.list_non_zero_valves();
+    let mut pressure_valves_AA = pressure_valves.clone();
+    pressure_valves_AA.push(Name::from_str("AA"));
+
+    // println!("{:?}", &pressure_valves);
+    let path_lengths: PathLengths = length_paths_valves(&network, &pressure_valves_AA);
+
+    let pressure = simulate_valves_elephant(
+        &network,
+        &path_lengths,
+        &pressure_valves,
+        26,
+        Name::from_str("AA"),
+        26,
+        Name::from_str("AA"),
+        &mut vec![],
+        0,
+    );
+    Some(pressure)
 }
 
 fn main() {
@@ -149,6 +335,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 16);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(1707));
     }
 }
