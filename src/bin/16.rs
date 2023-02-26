@@ -1,6 +1,5 @@
 use hashbrown::HashMap;
 use hashbrown::HashSet;
-use std::collections::BTreeMap;
 use std::collections::VecDeque;
 
 use itertools::Itertools;
@@ -103,7 +102,7 @@ fn simulate_valves(
     current_pressure + max_buildup_pressure
 }
 
-type PathLengths = BTreeMap<(Name, Name), i32>;
+type PathLengths = HashMap<(Name, Name), i32>;
 
 fn length_paths_valves(network: &Network, valves: &Vec<Name>) -> PathLengths {
     let mut path_lengths: PathLengths = Default::default();
