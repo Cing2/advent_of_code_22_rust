@@ -1,8 +1,8 @@
 use hashbrown::HashMap;
+use hashbrown::HashSet;
 use std::collections::BTreeMap;
 use std::collections::VecDeque;
 
-use hashbrown::HashSet;
 use itertools::Itertools;
 
 use regex::Regex;
