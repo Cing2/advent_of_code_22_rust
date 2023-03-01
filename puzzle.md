@@ -1,356 +1,41 @@
-\--- Day 17: Pyroclastic Flow ---
+\--- Day 18: Boiling Boulders ---
 ----------
 
-Your handheld device has located an alternative exit from the cave for you and the elephants. The ground is rumbling almost continuously now, but the strange valves bought you some time. It's definitely getting warmer in here, though.
+You and the elephants finally reach fresh air. You've emerged near the base of a large volcano that seems to be actively erupting! Fortunately, the lava seems to be flowing away from you and toward the ocean.
 
-The tunnels eventually open into a very tall, narrow chamber. Large, oddly-shaped rocks are falling into the chamber from above, presumably due to all the rumbling. If you can't work out where the rocks will fall next, you might be crushed!
+Bits of lava are still being ejected toward you, so you're sheltering in the cavern exit a little longer. Outside the cave, you can see the lava landing in a pond and hear it loudly hissing as it solidifies.
 
-The five types of rocks have the following peculiar shapes, where `#` is rock and `.` is empty space:
+Depending on the specific compounds in the lava and speed at which it cools, it might be forming [obsidian](https://en.wikipedia.org/wiki/Obsidian)! The cooling rate should be based on the surface area of the lava droplets, so you take a quick scan of a droplet as it flies past you (your puzzle input).
 
-```
-####
+Because of how quickly the lava is moving, the scan isn't very good; its resolution is quite low and, as a result, it approximates the shape of the lava droplet with *1x1x1 cubes on a 3D grid*, each given as its `x,y,z` position.
 
-.#.
-###
-.#.
+To approximate the surface area, count the number of sides of each cube that are not immediately connected to another cube. So, if your scan were only two adjacent cubes like `1,1,1` and `2,1,1`, each cube would have a single side covered and five sides exposed, a total surface area of `*10*` sides.
 
-..#
-..#
-###
-
-#
-#
-#
-#
-
-##
-##
+Here's a larger example:
 
 ```
-
-The rocks fall in the order shown above: first the `-` shape, then the `+` shape, and so on. Once the end of the list is reached, the same order repeats: the `-` shape falls first, sixth, 11th, 16th, etc.
-
-The rocks don't spin, but they do get pushed around by jets of hot gas coming out of the walls themselves. A quick scan reveals the effect the jets of hot gas will have on the rocks as they fall (your puzzle input).
-
-For example, suppose this was the jet pattern in your cave:
-
-```
->>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>
+2,2,2
+1,2,2
+3,2,2
+2,1,2
+2,3,2
+2,2,1
+2,2,3
+2,2,4
+2,2,6
+1,2,5
+3,2,5
+2,1,5
+2,3,5
 
 ```
 
-In jet patterns, `<` means a push to the left, while `>` means a push to the right. The pattern above means that the jets will push a falling rock right, then right, then right, then left, then left, then right, and so on. If the end of the list is reached, it repeats.
+In the above example, after counting up all the sides that aren't connected to another cube, the total surface area is `*64*`.
 
-The tall, vertical chamber is exactly *seven units wide*. Each rock appears so that its left edge is two units away from the left wall and its bottom edge is three units above the highest rock in the room (or the floor, if there isn't one).
+*What is the surface area of your scanned lava droplet?*
 
-After a rock appears, it alternates between *being pushed by a jet of hot gas* one unit (in the direction indicated by the next symbol in the jet pattern) and then *falling one unit down*. If any movement would cause any part of the rock to move into the walls, floor, or a stopped rock, the movement instead does not occur. If a *downward* movement would have caused a falling rock to move into the floor or an already-fallen rock, the falling rock stops where it is (having landed on something) and a new rock immediately begins falling.
-
-Drawing falling rocks with `@` and stopped rocks with `#`, the jet pattern in the example above manifests as follows:
-
-```
-The first rock begins falling:
-|..@@@@.|
-|.......|
-|.......|
-|.......|
-+-------+
-
-Jet of gas pushes rock right:
-|...@@@@|
-|.......|
-|.......|
-|.......|
-+-------+
-
-Rock falls 1 unit:
-|...@@@@|
-|.......|
-|.......|
-+-------+
-
-Jet of gas pushes rock right, but nothing happens:
-|...@@@@|
-|.......|
-|.......|
-+-------+
-
-Rock falls 1 unit:
-|...@@@@|
-|.......|
-+-------+
-
-Jet of gas pushes rock right, but nothing happens:
-|...@@@@|
-|.......|
-+-------+
-
-Rock falls 1 unit:
-|...@@@@|
-+-------+
-
-Jet of gas pushes rock left:
-|..@@@@.|
-+-------+
-
-Rock falls 1 unit, causing it to come to rest:
-|..####.|
-+-------+
-
-A new rock begins falling:
-|...@...|
-|..@@@..|
-|...@...|
-|.......|
-|.......|
-|.......|
-|..####.|
-+-------+
-
-Jet of gas pushes rock left:
-|..@....|
-|.@@@...|
-|..@....|
-|.......|
-|.......|
-|.......|
-|..####.|
-+-------+
-
-Rock falls 1 unit:
-|..@....|
-|.@@@...|
-|..@....|
-|.......|
-|.......|
-|..####.|
-+-------+
-
-Jet of gas pushes rock right:
-|...@...|
-|..@@@..|
-|...@...|
-|.......|
-|.......|
-|..####.|
-+-------+
-
-Rock falls 1 unit:
-|...@...|
-|..@@@..|
-|...@...|
-|.......|
-|..####.|
-+-------+
-
-Jet of gas pushes rock left:
-|..@....|
-|.@@@...|
-|..@....|
-|.......|
-|..####.|
-+-------+
-
-Rock falls 1 unit:
-|..@....|
-|.@@@...|
-|..@....|
-|..####.|
-+-------+
-
-Jet of gas pushes rock right:
-|...@...|
-|..@@@..|
-|...@...|
-|..####.|
-+-------+
-
-Rock falls 1 unit, causing it to come to rest:
-|...#...|
-|..###..|
-|...#...|
-|..####.|
-+-------+
-
-A new rock begins falling:
-|....@..|
-|....@..|
-|..@@@..|
-|.......|
-|.......|
-|.......|
-|...#...|
-|..###..|
-|...#...|
-|..####.|
-+-------+
-
-```
-
-The moment each of the next few rocks begins falling, you would see this:
-
-```
-|..@....|
-|..@....|
-|..@....|
-|..@....|
-|.......|
-|.......|
-|.......|
-|..#....|
-|..#....|
-|####...|
-|..###..|
-|...#...|
-|..####.|
-+-------+
-
-|..@@...|
-|..@@...|
-|.......|
-|.......|
-|.......|
-|....#..|
-|..#.#..|
-|..#.#..|
-|#####..|
-|..###..|
-|...#...|
-|..####.|
-+-------+
-
-|..@@@@.|
-|.......|
-|.......|
-|.......|
-|....##.|
-|....##.|
-|....#..|
-|..#.#..|
-|..#.#..|
-|#####..|
-|..###..|
-|...#...|
-|..####.|
-+-------+
-
-|...@...|
-|..@@@..|
-|...@...|
-|.......|
-|.......|
-|.......|
-|.####..|
-|....##.|
-|....##.|
-|....#..|
-|..#.#..|
-|..#.#..|
-|#####..|
-|..###..|
-|...#...|
-|..####.|
-+-------+
-
-|....@..|
-|....@..|
-|..@@@..|
-|.......|
-|.......|
-|.......|
-|..#....|
-|.###...|
-|..#....|
-|.####..|
-|....##.|
-|....##.|
-|....#..|
-|..#.#..|
-|..#.#..|
-|#####..|
-|..###..|
-|...#...|
-|..####.|
-+-------+
-
-|..@....|
-|..@....|
-|..@....|
-|..@....|
-|.......|
-|.......|
-|.......|
-|.....#.|
-|.....#.|
-|..####.|
-|.###...|
-|..#....|
-|.####..|
-|....##.|
-|....##.|
-|....#..|
-|..#.#..|
-|..#.#..|
-|#####..|
-|..###..|
-|...#...|
-|..####.|
-+-------+
-
-|..@@...|
-|..@@...|
-|.......|
-|.......|
-|.......|
-|....#..|
-|....#..|
-|....##.|
-|....##.|
-|..####.|
-|.###...|
-|..#....|
-|.####..|
-|....##.|
-|....##.|
-|....#..|
-|..#.#..|
-|..#.#..|
-|#####..|
-|..###..|
-|...#...|
-|..####.|
-+-------+
-
-|..@@@@.|
-|.......|
-|.......|
-|.......|
-|....#..|
-|....#..|
-|....##.|
-|##..##.|
-|######.|
-|.###...|
-|..#....|
-|.####..|
-|....##.|
-|....##.|
-|....#..|
-|..#.#..|
-|..#.#..|
-|#####..|
-|..###..|
-|...#...|
-|..####.|
-+-------+
-
-```
-
-To prove to the elephants your simulation is accurate, they want to know how tall the tower will get after 2022 rocks have stopped (but before the 2023rd rock begins falling). In this example, the tower of rocks will be `*3068*` units tall.
-
-*How many units tall will the tower of rocks be after 2022 rocks have stopped falling?*
-
-To begin, [get your puzzle input](17/input).
+To begin, [get your puzzle input](18/input).
 
 Answer:
 
-You can also [Shareon [Twitter](https://twitter.com/intent/tweet?text=%22Pyroclastic+Flow%22+%2D+Day+17+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F17&related=ericwastl&hashtags=AdventOfCode) [Mastodon](javascript:void(0);)] this puzzle.
+You can also [Shareon [Twitter](https://twitter.com/intent/tweet?text=%22Boiling+Boulders%22+%2D+Day+18+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F18&related=ericwastl&hashtags=AdventOfCode) [Mastodon](javascript:void(0);)] this puzzle.
