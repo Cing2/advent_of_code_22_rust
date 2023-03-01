@@ -103,7 +103,7 @@ fn simulate_falling_rocks(input: &str, nr_rocks: usize) -> i32 {
 
 pub fn part_one(input: &str) -> Option<i32> {
     let heighest_rock_position = simulate_falling_rocks(input, 2022);
-    Some(heighest_rock_position as i32)
+    Some(heighest_rock_position)
 }
 
 fn simulate_rock_with_pattern(input: &str, nr_rocks: usize) -> i64 {
@@ -189,7 +189,7 @@ fn simulate_rock_with_pattern(input: &str, nr_rocks: usize) -> i64 {
                     let recurring_loop = last_combi.0 - second_combi.0;
                     let loop_height = last_combi.2 as usize - second_combi.2 as usize;
                     let rocks_left = nr_rocks - i;
-                    let (multiple, left_over) =
+                    let (multiple, _left_over) =
                         (rocks_left / recurring_loop, rocks_left % recurring_loop);
                     // dbg!(i, recurring_loop, rocks_left, loop_height, multiple, left_over);
 
