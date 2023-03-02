@@ -112,20 +112,28 @@ fn create_array(cubes: &Vec<Cube>) -> CubesArray {
     array
 }
 
-fn index_in_array(x: isize, y: isize, z: isize, array: &CubesArray) -> bool {
-    x >= 0
-        && (x as usize) < array.dim().0
-        && y >= 0
-        && (x as usize) < array.dim().1
-        && z >= 0
-        && (x as usize) < array.dim().2
+fn index_in_array(x: usize, y: usize, z: usize, array: &CubesArray) -> bool {
+    x >= 0 && x < array.dim().0 && y >= 0 && y < array.dim().1 && z >= 0 && z < array.dim().2
 }
 
-fn contained_adjancend_cubes(drop_array: &CubesArray, x: isize, y: isize, z: isize) -> Option<i32> {
+fn cube_in_array(cube: &Cube, array: &CubesArray) -> bool {
+    cube.x >= 0
+        && (cube.x as usize) < array.dim().0
+        && cube.y >= 0
+        && (cube.y as usize) < array.dim().1
+        && cube.z >= 0
+        && (cube.z as usize) < array.dim().2
+}
+
+fn contained_adjancend_cubes(drop_array: &CubesArray, x: usize, y: usize, z: usize) -> Option<i32> {
     // for every direction check if we find a block
     let mut nr_adjacend_cubes = 0;
     for dir in 0..6 {
-        let mut current = Cube { x: x, y: y, z: z };
+        let mut current = Cube {
+            x: x as isize,
+            y: y as isize,
+            z: z as isize,
+        };
         let mut first_cube = true;
         loop {
             match dir {
@@ -138,7 +146,7 @@ fn contained_adjancend_cubes(drop_array: &CubesArray, x: isize, y: isize, z: isi
                 _ => (),
             };
             // check if index falls in array
-            if !index_in_array(x, y, z, drop_array){
+            if !cube_in_array(&current, drop_array) {
                 return None;
             }
 
@@ -166,40 +174,27 @@ pub fn part_two(input: &str) -> Option<i32> {
 
     let drop_array = create_array(&cubes);
     // dbg!(&drop_array);
-    // from every direction scan matrix to find side
-    // let sides_z = drop_array
-    //     .sum_axis(Axis(2))
-    //     .iter()
-    //     .filter(|a| a > &&0)
-    //     .count()
-    //     * 2;
-    // let sides_y = drop_array
-    //     .sum_axis(Axis(1))
-    //     .iter()
-    //     .filter(|a| a > &&0)
-    //     .count()
-    //     * 2;
-    // let sides_x = drop_array
-    //     .sum_axis(Axis(0))
-    //     .iter()
-    //     .filter(|a| a > &&0)
-    //     .count()
-    //     * 2;
-    // dbg!(sides_z, sides_x, sides_y);
 
-    
+    // get sum of inside adjanced squares
+    let sides_inside: i32 = drop_array
+        .indexed_iter()
+        .filter(|(_, cube)| **cube == 0)
+        .filter_map(|(idx, _)| contained_adjancend_cubes(&drop_array, idx.0, idx.1, idx.2))
+        .sum();
+    dbg!(sides_inside);
+
     // scan every square if it is fully contained
-    for x in 0..drop_array.dim().0 {
-        for y in 0..drop_array.dim().1 {
-            let mut last_z = drop_array.dim().2;
-            for z in 0..drop_array.dim().2 {
-                
-            }
-        }
-    }
+    // for x in 0..drop_array.dim().0 {
+    //     for y in 0..drop_array.dim().1 {
+    //         let mut last_z = drop_array.dim().2;
+    //         for z in 0..drop_array.dim().2 {
+
+    //         }
+    //     }
+    // }
 
     // Some((sides_x + sides_y + sides_z) as i32)
-    None
+    Some(nr_sides - sides_inside)
 }
 
 fn main() {
