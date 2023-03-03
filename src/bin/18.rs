@@ -1,14 +1,16 @@
 #[macro_use]
 extern crate impl_ops;
-use std::{borrow::Borrow, ops};
+use std::{collections::VecDeque, ops};
 
-use ndarray::{Array3, Axis};
+use hashbrown::HashSet;
+use itertools::Itertools;
+use ndarray::Array3;
 
-#[derive(PartialEq, Eq, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash)]
 struct Cube {
-    x: isize,
-    y: isize,
-    z: isize,
+    x: i32,
+    y: i32,
+    z: i32,
 }
 
 impl_op_ex!(-|a: &Cube, b: &Cube| -> Cube {
@@ -21,10 +23,10 @@ impl_op_ex!(-|a: &Cube, b: &Cube| -> Cube {
 
 impl Cube {
     fn from_line(line: &str) -> Option<Cube> {
-        let nums: Vec<isize> = line
+        let nums: Vec<i32> = line
             .trim()
             .split(',')
-            .filter_map(|a| a.parse::<isize>().ok())
+            .filter_map(|a| a.parse::<i32>().ok())
             .collect();
         if nums.len() < 3 {
             None
@@ -35,6 +37,34 @@ impl Cube {
                 z: nums[2],
             })
         }
+    }
+
+    fn from_tuple(idx: (usize, usize, usize)) -> Cube {
+        Cube {
+            x: idx.0 as i32,
+            y: idx.1 as i32,
+            z: idx.2 as i32,
+        }
+    }
+
+    fn list_adjacent_cubes_nr(&self, cube_array: &CubesArray) -> Vec<Cube> {
+        let mut output = vec![];
+        for dir in 0..6 {
+            let mut new_cube = self.clone();
+            match dir {
+                0 => new_cube.x -= 1,
+                1 => new_cube.x += 1,
+                2 => new_cube.y -= 1,
+                3 => new_cube.y += 1,
+                4 => new_cube.z -= 1,
+                5 => new_cube.z += 1,
+                _ => (),
+            };
+            if cube_in_array(&new_cube, cube_array) {
+                output.push(new_cube);
+            }
+        }
+        output
     }
 
     fn min(&self, other: &Self) -> Self {
@@ -60,7 +90,7 @@ impl Cube {
         }
     }
 
-    fn sum(self) -> isize {
+    fn sum(self) -> i32 {
         self.x + self.y + self.z
     }
 
@@ -97,12 +127,14 @@ pub fn part_one(input: &str) -> Option<i32> {
     Some(nr_sides)
 }
 
+type CubesArray = Array3<i8>;
+
 fn create_array(cubes: &Vec<Cube>) -> CubesArray {
     let max_cube = cubes.iter().copied().reduce(|a, b| a.max(&b)).unwrap();
     let mut array = Array3::<i8>::zeros((
-        max_cube.x as usize + 1,
-        max_cube.y as usize + 1,
-        max_cube.z as usize + 1,
+        max_cube.x as usize + 2,
+        max_cube.y as usize + 2,
+        max_cube.z as usize + 2,
     ));
 
     for cube in cubes {
@@ -110,10 +142,6 @@ fn create_array(cubes: &Vec<Cube>) -> CubesArray {
     }
 
     array
-}
-
-fn index_in_array(x: usize, y: usize, z: usize, array: &CubesArray) -> bool {
-    x >= 0 && x < array.dim().0 && y >= 0 && y < array.dim().1 && z >= 0 && z < array.dim().2
 }
 
 fn cube_in_array(cube: &Cube, array: &CubesArray) -> bool {
@@ -125,76 +153,47 @@ fn cube_in_array(cube: &Cube, array: &CubesArray) -> bool {
         && (cube.z as usize) < array.dim().2
 }
 
-fn contained_adjancend_cubes(drop_array: &CubesArray, x: usize, y: usize, z: usize) -> Option<i32> {
-    // for every direction check if we find a block
-    let mut nr_adjacend_cubes = 0;
-    for dir in 0..6 {
-        let mut current = Cube {
-            x: x as isize,
-            y: y as isize,
-            z: z as isize,
-        };
-        let mut first_cube = true;
-        loop {
-            match dir {
-                0 => current.x -= 1,
-                1 => current.x += 1,
-                2 => current.y -= 1,
-                3 => current.y += 1,
-                4 => current.z -= 1,
-                5 => current.z += 1,
-                _ => (),
-            };
-            // check if index falls in array
-            if !cube_in_array(&current, drop_array) {
-                return None;
-            }
-
-            if drop_array[[current.x as usize, current.y as usize, current.z as usize]] > 0 {
-                if first_cube {
-                    nr_adjacend_cubes += 1
-                }
-
-                //found block
-                break;
-            }
-            first_cube = false;
-        }
-    }
-
-    // if no exited early block is contained
-    return Some(nr_adjacend_cubes);
-}
-
-type CubesArray = Array3<i8>;
-
 pub fn part_two(input: &str) -> Option<i32> {
     let cubes = parse_cubes(input);
-    let mut nr_sides = get_nr_sides(&cubes);
+    // let nr_sides = get_nr_sides(&cubes);
 
     let drop_array = create_array(&cubes);
     // dbg!(&drop_array);
 
-    // get sum of inside adjanced squares
-    let sides_inside: i32 = drop_array
+    // do breath first search on start to find all sides that can be found from outside
+    let mut queue: VecDeque<Cube> = Default::default();
+    let mut visited: HashSet<Cube> = Default::default();
+
+    let first_empty_index: (usize, usize, usize) = drop_array
         .indexed_iter()
-        .filter(|(_, cube)| **cube == 0)
-        .filter_map(|(idx, _)| contained_adjancend_cubes(&drop_array, idx.0, idx.1, idx.2))
-        .sum();
-    dbg!(sides_inside);
+        .find_or_first(|(_, cube)| **cube == 0)
+        .unwrap()
+        .0;
+    let start = Cube::from_tuple(first_empty_index);
 
-    // scan every square if it is fully contained
-    // for x in 0..drop_array.dim().0 {
-    //     for y in 0..drop_array.dim().1 {
-    //         let mut last_z = drop_array.dim().2;
-    //         for z in 0..drop_array.dim().2 {
+    queue.push_back(start);
+    visited.insert(start);
 
-    //         }
-    //     }
-    // }
+    let mut nr_sides = 0;
 
-    // Some((sides_x + sides_y + sides_z) as i32)
-    Some(nr_sides - sides_inside)
+    while !queue.is_empty() {
+        let next = queue.pop_front().unwrap();
+
+        for other in next.list_adjacent_cubes_nr(&drop_array) {
+            //check if full then add sides
+            if !visited.contains(&other) {
+                if drop_array[[other.x as usize, other.y as usize, other.z as usize]] == 0 {
+                    queue.push_back(other);
+                    visited.insert(other);
+                } else {
+                    nr_sides += 1;
+                }
+            }
+        }
+    }
+
+    // Some(nr_sides - sides_inside)
+    Some(nr_sides)
 }
 
 fn main() {
