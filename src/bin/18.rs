@@ -50,7 +50,7 @@ impl Cube {
     fn list_adjacent_cubes_nr(&self, cube_array: &CubesArray) -> Vec<Cube> {
         let mut output = vec![];
         for dir in 0..6 {
-            let mut new_cube = self.clone();
+            let mut new_cube = *self;
             match dir {
                 0 => new_cube.x -= 1,
                 1 => new_cube.x += 1,
@@ -67,13 +67,6 @@ impl Cube {
         output
     }
 
-    fn min(&self, other: &Self) -> Self {
-        Self {
-            x: self.x.min(other.x),
-            y: self.y.min(other.y),
-            z: self.z.min(other.z),
-        }
-    }
     fn max(&self, other: &Self) -> Self {
         Self {
             x: self.x.max(other.x),
