@@ -3,6 +3,7 @@ use std::{
     time::Instant,
 };
 
+use rayon::prelude::*;
 use regex::Regex;
 
 #[derive(Debug, Clone, Copy)]
@@ -139,7 +140,11 @@ impl Factory {
         }
     }
 
-    fn list_possible_actions(&self, blueprint: &BluePrint) -> Vec<Actions> {
+    fn list_possible_actions(
+        &self,
+        blueprint: &BluePrint,
+        previous_action: &Actions,
+    ) -> Vec<Actions> {
         let mut options = vec![];
         if self.min_left == 1 {
             return vec![Actions::NOOP];
@@ -161,7 +166,12 @@ impl Factory {
         if self.robots.ore < max_ore_cost && self.resource.ore >= blueprint.ore_robot {
             // check if making robot has a benefit, new robot should be able to make 1 resource
             if self.min_left > (blueprint.ore_robot + 2) {
-                options.push(Actions::BuildOre);
+                // only make robot if we could not make robot last step
+                if !(previous_action == &Actions::NOOP
+                    && (self.resource.ore - self.robots.ore) >= blueprint.ore_robot)
+                {
+                    options.push(Actions::BuildOre);
+                }
             }
         }
         // same only make clay robot if below max
@@ -169,14 +179,26 @@ impl Factory {
             && self.resource.ore >= blueprint.clay_robot
         {
             if self.min_left > (blueprint.clay_robot + 2) {
-                options.push(Actions::BuildClay);
+                // only make robot if we could not make robot last step
+
+                if !(previous_action == &Actions::NOOP
+                    && (self.resource.ore - self.robots.ore) >= blueprint.clay_robot)
+                {
+                    options.push(Actions::BuildClay);
+                }
             }
         }
         if self.robots.obsidian < blueprint.geode_robot.1
             && self.resource.ore >= blueprint.obsidian_robot.0
             && self.resource.clay >= blueprint.obsidian_robot.1
         {
-            options.push(Actions::BuildObsidian);
+            // only make robot if we could not make robot last step
+            if !(previous_action == &Actions::NOOP
+                && (self.resource.ore - self.robots.ore) >= blueprint.obsidian_robot.0
+                && (self.resource.clay - self.robots.clay >= blueprint.obsidian_robot.1))
+            {
+                options.push(Actions::BuildObsidian);
+            }
         }
 
         // add noop latter to prioritize making a robot
@@ -185,22 +207,20 @@ impl Factory {
         options
     }
 
-    fn simulate_factory(self, blueprint: &BluePrint) -> u32 {
+    fn simulate_factory(self, blueprint: &BluePrint, previous_action: &Actions) -> u32 {
         if self.min_left == 0 {
             return self.resource.geodes;
         }
         let mut best_geodes = 0;
 
-        for action in self.list_possible_actions(blueprint) {
+        for action in self.list_possible_actions(blueprint, previous_action) {
             let mut next_state = self.clone();
-            // println!("{:?}", &next_state.resource);
             next_state.step(&action, blueprint);
-            // println!("{:?}", &next_state.resource);
+
             // branch and bound, to only consider branches that can possible be better
             if next_state.bound(blueprint) > best_geodes {
-                best_geodes = best_geodes.max(next_state.simulate_factory(blueprint));
+                best_geodes = best_geodes.max(next_state.simulate_factory(blueprint, &action));
             }
-            // println!("Branch skipped {}", self.min_left);
         }
 
         best_geodes
@@ -237,19 +257,16 @@ impl Factory {
 
 pub fn part_one(input: &str) -> Option<u32> {
     let blueprints = parse_blueprint(input);
-
-    // let timer = Instant::now();
-    // let scores = factories[0].simulate_factory();
-    // let elapsed = timer.elapsed();
-    // dbg!(scores, elapsed);
-
     let timer = Instant::now();
     let scores: Vec<u32> = blueprints
-        .iter()
-        .map(|blueprint| Factory::new(24).simulate_factory(blueprint) * blueprint.id)
+        .par_iter()
+        .map(|blueprint| {
+            Factory::new(24).simulate_factory(blueprint, &Actions::NOOP) * blueprint.id
+        })
         .collect();
     let elapsed = timer.elapsed();
-    dbg!(&scores, &elapsed);
+    // dbg!(&scores, &elapsed);
+    // dbg!(elapsed);
     let final_score: u32 = scores.into_iter().sum();
 
     Some(final_score)
@@ -257,23 +274,19 @@ pub fn part_one(input: &str) -> Option<u32> {
 
 pub fn part_two(input: &str) -> Option<u32> {
     let blueprints = parse_blueprint(input);
-    // dbg!(blueprints);
-    // let factories: Vec<Factory> = blueprints
-    //     .iter()
-    //     .take(3)
-    //     .copied()
-    //     .map(|blue| Factory::new(blue, 32))
-    //     .collect();
-    // dbg!(&factories);
-
+    
     // let timer = Instant::now();
-    // let scores: Vec<u32> = factories.iter().map(|f| f.simulate_factory()).collect();
+    // let scores = Factory::new(29).simulate_factory(&blueprints[0], &Actions::NOOP);
     // let elapsed = timer.elapsed();
     // dbg!(&scores, &elapsed);
-    // let final_score: u32 = scores.iter().product();
 
-    // Some(final_score)
-    None
+    let timer = Instant::now();
+    let score: u32 = blueprints.par_iter().take(3).map(|blueprint| Factory::new(32).simulate_factory(blueprint, &Actions::NOOP)).product();
+    let elapsed = timer.elapsed();
+    // dbg!(&score, &elapsed);
+
+    Some(score)
+    // None
 }
 
 fn main() {
@@ -295,6 +308,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 19);
-        assert_eq!(part_two(&input), Some(2));
+        assert_eq!(part_two(&input), Some(56*62));
     }
 }
