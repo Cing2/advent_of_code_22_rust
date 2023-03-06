@@ -274,14 +274,18 @@ pub fn part_one(input: &str) -> Option<u32> {
 
 pub fn part_two(input: &str) -> Option<u32> {
     let blueprints = parse_blueprint(input);
-    
+
     // let timer = Instant::now();
     // let scores = Factory::new(29).simulate_factory(&blueprints[0], &Actions::NOOP);
     // let elapsed = timer.elapsed();
     // dbg!(&scores, &elapsed);
 
     let timer = Instant::now();
-    let score: u32 = blueprints.par_iter().take(3).map(|blueprint| Factory::new(32).simulate_factory(blueprint, &Actions::NOOP)).product();
+    let score: u32 = blueprints
+        .par_iter()
+        .take(3)
+        .map(|blueprint| Factory::new(32).simulate_factory(blueprint, &Actions::NOOP))
+        .product();
     let elapsed = timer.elapsed();
     // dbg!(&score, &elapsed);
 
@@ -308,6 +312,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 19);
-        assert_eq!(part_two(&input), Some(56*62));
+        assert_eq!(part_two(&input), Some(56 * 62));
     }
 }
