@@ -20,18 +20,18 @@ impl BluePrint {
         let re = Regex::new(r"Blueprint (?P<id>\d+): Each ore robot costs (?P<o>\d+) ore. Each clay robot costs (?P<c>\d+) ore. Each obsidian robot costs (?P<obo>\d+) ore and (?P<obc>\d+) clay. Each geode robot costs (?P<go>\d+) ore and (?P<gob>\d+) obsidian.").unwrap();
 
         re.captures(line).map(|cap| BluePrint {
-                id: cap["id"].parse::<u32>().unwrap(),
-                ore_robot: cap["o"].parse::<u32>().unwrap(),
-                clay_robot: cap["c"].parse::<u32>().unwrap(),
-                obsidian_robot: (
-                    cap["obo"].parse::<u32>().unwrap(),
-                    cap["obc"].parse::<u32>().unwrap(),
-                ),
-                geode_robot: (
-                    cap["go"].parse::<u32>().unwrap(),
-                    cap["gob"].parse::<u32>().unwrap(),
-                ),
-            })
+            id: cap["id"].parse::<u32>().unwrap(),
+            ore_robot: cap["o"].parse::<u32>().unwrap(),
+            clay_robot: cap["c"].parse::<u32>().unwrap(),
+            obsidian_robot: (
+                cap["obo"].parse::<u32>().unwrap(),
+                cap["obc"].parse::<u32>().unwrap(),
+            ),
+            geode_robot: (
+                cap["go"].parse::<u32>().unwrap(),
+                cap["gob"].parse::<u32>().unwrap(),
+            ),
+        })
     }
 }
 
@@ -172,7 +172,10 @@ impl Factory {
             }
         }
         // same only make clay robot if below max
-        if self.robots.clay < blueprint.obsidian_robot.1 && self.resource.ore >= blueprint.clay_robot && self.min_left > (blueprint.clay_robot + 2) {
+        if self.robots.clay < blueprint.obsidian_robot.1
+            && self.resource.ore >= blueprint.clay_robot
+            && self.min_left > (blueprint.clay_robot + 2)
+        {
             // only make robot if we could not make robot last step
 
             if !(previous_action == &Actions::Noop
