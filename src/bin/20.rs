@@ -1,54 +1,78 @@
 use std::collections::VecDeque;
 
-fn parse_numbers(input: &str) -> Vec<i32> {
-    input.lines().map(|l| l.parse::<i32>().unwrap()).collect()
+fn parse_numbers(input: &str) -> Vec<i64> {
+    input.lines().map(|l| l.parse::<i64>().unwrap()).collect()
 }
 
-pub fn part_one(input: &str) -> Option<i32> {
-    let numbers = parse_numbers(input);
+type MixedNumbers = VecDeque<(usize, i64)>;
 
-    let mut new_numbers: VecDeque<i32> = numbers.clone().into();
-    // keeping a seperate list of unique ids to prevent mess up with duplicates
-    let mut ids_numbers: VecDeque<usize> = numbers.iter().enumerate().map(|(i, _)| i).collect();
-
-    let length_numbers = new_numbers.len() as i32;
+fn mix_numbers(mut new_numbers: MixedNumbers, numbers: &Vec<i64>) -> MixedNumbers {
+    let length_numbers = new_numbers.len() as i64;
 
     for (i, num) in numbers.iter().enumerate() {
-        // find ids of number in other list to prevent duplicates
-        let idx_number: i32 = ids_numbers
+        // find idx of number in list
+        let idx_number: i64 = new_numbers
             .iter()
-            .position(|a| a == &i)
+            .position(|a| a.0 == i)
             .unwrap()
             .try_into()
             .unwrap();
 
         // add them to correct position
-        let mut new_idx: i32 = (idx_number + num) % (length_numbers - 1);
+        let mut new_idx: i64 = (idx_number + num) % (length_numbers - 1);
         if new_idx <= 0 && idx_number + num != 0 {
             new_idx += length_numbers - 1;
         }
 
         // remove numbers
         new_numbers.remove(idx_number as usize);
-        ids_numbers.remove(idx_number as usize);
 
-        new_numbers.insert(new_idx as usize, *num);
-        ids_numbers.insert(new_idx as usize, i);
+        new_numbers.insert(new_idx as usize, (i, *num));
     }
 
-    let add_idxs: Vec<usize> = vec![1000, 2000, 3000];
-    let idx_zero = new_numbers.iter().position(|n| n == &0).unwrap();
-    let outcome: i32 = add_idxs
-        .iter()
-        .map(|add_idx| new_numbers[(add_idx + idx_zero) % length_numbers as usize])
-        .sum();
-    dbg!(outcome);
-    Some(outcome)
-    // None
+    new_numbers
 }
 
-pub fn part_two(input: &str) -> Option<i32> {
-    None
+fn get_key_numbers(new_numbers: MixedNumbers) -> i64 {
+    let length_numbers = new_numbers.len() as i64;
+
+    let add_idxs: Vec<usize> = vec![1000, 2000, 3000];
+    let idx_zero = new_numbers.iter().position(|n| n.1 == 0).unwrap();
+    let outcome: i64 = add_idxs
+        .iter()
+        .map(|add_idx| new_numbers[(add_idx + idx_zero) % length_numbers as usize].1)
+        .sum();
+
+    outcome
+}
+
+pub fn part_one(input: &str) -> Option<i64> {
+    let numbers = parse_numbers(input);
+
+    // keeping a tupled list of unique ids to prevent mess up with duplicates
+    let mut new_numbers: MixedNumbers = numbers.iter().copied().enumerate().collect();
+    // do the mixing
+    new_numbers = mix_numbers(new_numbers, &numbers);
+
+    Some(get_key_numbers(new_numbers))
+}
+
+pub fn part_two(input: &str) -> Option<i64> {
+    let decryption_key = 811589153;
+    // dbg!(parse_numbers(input));
+    let numbers: Vec<i64> = parse_numbers(input)
+        .iter()
+        .map(|num| num * decryption_key)
+        .collect();
+
+    // keeping a tupled list of unique ids to prevent mess up with duplicates
+    let mut new_numbers: MixedNumbers = numbers.iter().copied().enumerate().collect();
+
+    for _ in 0..10 {
+        new_numbers = mix_numbers(new_numbers, &numbers);
+    }
+
+    Some(get_key_numbers(new_numbers))
 }
 
 fn main() {
@@ -70,6 +94,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 20);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(1623178306));
     }
 }
