@@ -17,12 +17,6 @@ enum Operation {
     Divide,
 }
 
-// impl fmt::Debug for MonkeyTask {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "Monkeys: {:?} - includes: {:?}", self.monkeys, self.has_human_node)
-//     }
-// }
-
 #[derive(Debug)]
 enum Monkey {
     Number(i64),
