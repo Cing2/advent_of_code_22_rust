@@ -29,7 +29,7 @@ fn parse_monkeys(input: &str) -> MonkeysMap {
     let mut monkeys: MonkeysMap = Default::default();
 
     for line in input.lines() {
-        let (mut monkey, task) = line.split_once(": ").unwrap();
+        let (monkey, task) = line.split_once(": ").unwrap();
 
         let operation: Option<Operation> = if task.contains('+') {
             Some(Operation::Add)
@@ -45,7 +45,7 @@ fn parse_monkeys(input: &str) -> MonkeysMap {
 
         let task = if let Some(op) = operation {
             let monkeys_string: (&str, &str) =
-                task.split_once(['+', '-', '*', '/']).unwrap().into();
+                task.split_once(['+', '-', '*', '/']).unwrap();
             let with_monkeys = (
                 monkeys_string.0.trim().to_owned(),
                 monkeys_string.1.trim().to_owned(),
@@ -130,17 +130,17 @@ fn reverse_human_value(monkeys: &MonkeysMap, monkey: &String, value: i64) -> i64
 
             if child_one_human {
                 // if left has human in it
-                let value_other = monkey_says(&monkeys, &node.monkeys.1);
+                let value_other = monkey_says(monkeys, &node.monkeys.1);
                 let new_value = match node.operation {
                     Operation::Add => value - value_other,
                     Operation::Subtract => value + value_other,
                     Operation::Multiply => value / value_other,
                     Operation::Divide => value * value_other,
                 };
-                return reverse_human_value(&monkeys, &node.monkeys.0, new_value);
+                reverse_human_value(monkeys, &node.monkeys.0, new_value)
             } else {
                 // if right has human in it
-                let value_other = monkey_says(&monkeys, &node.monkeys.0);
+                let value_other = monkey_says(monkeys, &node.monkeys.0);
                 let new_value = match node.operation {
                     Operation::Add => value - value_other,
                     Operation::Subtract => value_other - value,
@@ -148,7 +148,7 @@ fn reverse_human_value(monkeys: &MonkeysMap, monkey: &String, value: i64) -> i64
                     Operation::Divide => value_other / value,
                 };
 
-                return reverse_human_value(&monkeys, &node.monkeys.1, new_value);
+                reverse_human_value(monkeys, &node.monkeys.1, new_value)
             }
         }
     }
