@@ -1,7 +1,4 @@
-use std::{
-    ops::{Add, AddAssign},
-    time::Instant,
-};
+use std::ops::{Add, AddAssign};
 
 use rayon::prelude::*;
 use regex::Regex;
