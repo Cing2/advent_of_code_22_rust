@@ -8,11 +8,7 @@ use ndarray::prelude::*;
 type Maze = Array2<i8>;
 
 fn parse_maze(input: &str) -> Maze {
-    let characters: Vec<Vec<char>> = input
-        .lines()
-        .take_while(|p| !p.is_empty())
-        .map(|a| a.chars().collect())
-        .collect();
+    let characters: Vec<Vec<char>> = input.lines().take_while(|p| !p.is_empty()).map(|a| a.chars().collect()).collect();
     let longest_line = characters.iter().map(|a| a.len()).max().unwrap();
     let size = (characters.len(), longest_line);
     let mut maze = Array2::<i8>::zeros(size);
@@ -137,8 +133,8 @@ fn find_position(
             1 => return Some(new_position),
             _ => (),
         }
+
     }
-    None
 }
 
 fn print_maze(maze: &Maze) {
@@ -153,12 +149,13 @@ fn print_maze(maze: &Maze) {
         }
         print!("\n");
     }
+
 }
 
 pub fn part_one(input: &str) -> Option<i32> {
-    let maze = parse_maze(input);
+    let maze = parse_maze(input);    
     let instructions = parse_instructions(input);
-
+    
     // do simulation
     let mut position = Coords {
         x: 0,
@@ -171,6 +168,7 @@ pub fn part_one(input: &str) -> Option<i32> {
     };
 
     dbg!(position, direction, array_size);
+
 
     for instruction in instructions {
         match instruction {
