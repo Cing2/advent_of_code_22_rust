@@ -44,8 +44,7 @@ fn parse_monkeys(input: &str) -> MonkeysMap {
         };
 
         let task = if let Some(op) = operation {
-            let monkeys_string: (&str, &str) =
-                task.split_once(['+', '-', '*', '/']).unwrap();
+            let monkeys_string: (&str, &str) = task.split_once(['+', '-', '*', '/']).unwrap();
             let with_monkeys = (
                 monkeys_string.0.trim().to_owned(),
                 monkeys_string.1.trim().to_owned(),
