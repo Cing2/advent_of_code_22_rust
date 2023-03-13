@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate impl_ops;
-use std::{ops, collections::VecDeque};
+use std::{collections::VecDeque, ops};
 
-use hashbrown::{HashSet, HashMap};
+use hashbrown::{HashMap, HashSet};
 use itertools::enumerate;
 use ndarray::prelude::*;
 
@@ -87,7 +87,12 @@ struct Coords {
 }
 
 impl_op_ex!(+ |a: &Coords, b: &Coords| -> Coords { Coords { x: a.x + b.x, y: a.y + b.y }});
-impl_op_ex!(- |a: &Coords, b: &Coords| -> Coords { Coords { x: a.x + b.x, y: a.y + b.y }});
+impl_op_ex!(-|a: &Coords, b: &Coords| -> Coords {
+    Coords {
+        x: a.x + b.x,
+        y: a.y + b.y,
+    }
+});
 
 impl Coords {
     fn coords_in_array(&self, array: &Array2<i8>) -> bool {
@@ -237,12 +242,11 @@ fn find_position_cube(
     }
 }
 
-
 enum CubeSides {
     Top,
     Left,
     Right,
-    Front, 
+    Front,
     Back,
     Bottom,
 }
@@ -251,11 +255,8 @@ enum NSEW {
     North,
     South,
     East,
-    West
+    West,
 }
-
-
-
 
 fn fold_cube(maze: &Maze) {
     let cube_size = if cfg!(test) { 4 } else { 50 };
@@ -271,11 +272,19 @@ fn fold_cube(maze: &Maze) {
 
     dbg!(small_maze);
 
-    let mut cube = HashMap;
+    // let mut cube = HashMap;
 
     //bfs over cube to fold it
-    let start: Coords = Coords { x: 0, y: small_maze[0].iter().position(|a| a> &0).unwrap() as i32 };
-    let directions = vec![Coords{x:0, y:1}, Coords{ x: 0, y: -1 }, Coords{ x: 1, y: 0 }, Coords{ x: -1, y: 0 }];
+    let start: Coords = Coords {
+        x: 0,
+        y: small_maze[0].iter().position(|a| a > &0).unwrap() as i32,
+    };
+    let directions = vec![
+        Coords { x: 0, y: 1 },
+        Coords { x: 0, y: -1 },
+        Coords { x: 1, y: 0 },
+        Coords { x: -1, y: 0 },
+    ];
     let mut queue: VecDeque<Coords> = VecDeque::new();
     queue.push_back(start);
     let mut visited: HashSet<Coords> = Default::default();
@@ -284,18 +293,19 @@ fn fold_cube(maze: &Maze) {
         let next = queue.pop_front().unwrap();
         for dir in &directions {
             let new_position = next - dir;
-            if new_position.x < 0 || new_position.y > (small_maze[0].len()-1) as i32 || new_position.y < 0 || new_position.y > (small_maze[0].len()-1) as i32  {
+            if new_position.x < 0
+                || new_position.y > (small_maze[0].len() - 1) as i32
+                || new_position.y < 0
+                || new_position.y > (small_maze[0].len() - 1) as i32
+            {
                 break; // not on grid
             }
             if small_maze[new_position.x as usize][new_position.y as usize] == 0 {
                 break;
             }
             // found adjacent grid
-
-
         }
     }
-
 }
 
 pub fn part_two(input: &str) -> Option<i32> {
