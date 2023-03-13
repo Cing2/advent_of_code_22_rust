@@ -137,6 +137,7 @@ fn find_position(
     }
 }
 
+
 fn print_maze(maze: &Maze) {
     for row in maze.axis_iter(Axis(0)) {
         for element in row.iter() {
@@ -166,7 +167,7 @@ pub fn part_one(input: &str) -> Option<i32> {
         x: maze.dim().0 as i32,
         y: maze.dim().1 as i32,
     };
-
+    
     dbg!(position, direction, array_size);
 
 
@@ -200,6 +201,37 @@ pub fn part_one(input: &str) -> Option<i32> {
 
     Some(outcome)
 }
+
+fn get_side_oncube(pos: Coords){
+    
+}
+
+fn find_position_cube(
+    maze: &Maze,
+    position: &Coords,
+    direction: &Coords,
+    maze_size: &Coords,
+) -> Option<Coords> {
+    let mut new_position: Coords = position.clone();
+    // dbg!(new_position, position, direction);
+
+    loop {
+        new_position = new_position + direction;
+        // dbg!(&new_position);
+        if !new_position.coords_in_array(maze) {
+            new_position = (new_position + maze_size).modulo(maze_size);
+        }
+
+        match maze[[new_position.x as usize, new_position.y as usize]] {
+            2 => return None,
+            1 => return Some(new_position),
+            _ => (),
+        }
+
+    }
+}
+
+
 
 pub fn part_two(input: &str) -> Option<i32> {
     None
