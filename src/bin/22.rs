@@ -1,14 +1,19 @@
 #[macro_use]
 extern crate impl_ops;
-use std::ops;
+use std::{ops, collections::VecDeque};
 
+use hashbrown::{HashSet, HashMap};
 use itertools::enumerate;
 use ndarray::prelude::*;
 
 type Maze = Array2<i8>;
 
 fn parse_maze(input: &str) -> Maze {
-    let characters: Vec<Vec<char>> = input.lines().take_while(|p| !p.is_empty()).map(|a| a.chars().collect()).collect();
+    let characters: Vec<Vec<char>> = input
+        .lines()
+        .take_while(|p| !p.is_empty())
+        .map(|a| a.chars().collect())
+        .collect();
     let longest_line = characters.iter().map(|a| a.len()).max().unwrap();
     let size = (characters.len(), longest_line);
     let mut maze = Array2::<i8>::zeros(size);
@@ -75,13 +80,14 @@ fn parse_instructions(input: &str) -> Vec<Instruction> {
     instructions
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct Coords {
     x: i32,
     y: i32,
 }
 
 impl_op_ex!(+ |a: &Coords, b: &Coords| -> Coords { Coords { x: a.x + b.x, y: a.y + b.y }});
+impl_op_ex!(- |a: &Coords, b: &Coords| -> Coords { Coords { x: a.x + b.x, y: a.y + b.y }});
 
 impl Coords {
     fn coords_in_array(&self, array: &Array2<i8>) -> bool {
@@ -133,10 +139,8 @@ fn find_position(
             1 => return Some(new_position),
             _ => (),
         }
-
     }
 }
-
 
 fn print_maze(maze: &Maze) {
     for row in maze.axis_iter(Axis(0)) {
@@ -150,14 +154,9 @@ fn print_maze(maze: &Maze) {
         }
         print!("\n");
     }
-
 }
 
-pub fn part_one(input: &str) -> Option<i32> {
-    let maze = parse_maze(input);    
-    let instructions = parse_instructions(input);
-    
-    // do simulation
+fn simulate_instructions(maze: &Maze, instructions: &Vec<Instruction>) -> (Coords, Coords) {
     let mut position = Coords {
         x: 0,
         y: maze.slice(s![0, ..]).iter().position(|n| n == &1).unwrap() as i32,
@@ -167,14 +166,13 @@ pub fn part_one(input: &str) -> Option<i32> {
         x: maze.dim().0 as i32,
         y: maze.dim().1 as i32,
     };
-    
-    dbg!(position, direction, array_size);
 
+    dbg!(position, direction, array_size);
 
     for instruction in instructions {
         match instruction {
             Instruction::Steps(n) => {
-                for _ in 0..n {
+                for _ in 0..*n {
                     if let Some(new_pos) = find_position(&maze, &position, &direction, &array_size)
                     {
                         position = new_pos;
@@ -189,6 +187,17 @@ pub fn part_one(input: &str) -> Option<i32> {
             }
         }
     }
+
+    (position, direction)
+}
+
+pub fn part_one(input: &str) -> Option<i32> {
+    let maze = parse_maze(input);
+    let instructions = parse_instructions(input);
+
+    // do simulation
+    let (position, direction) = simulate_instructions(&maze, &instructions);
+
     let direction_score = match direction {
         Coords { x: 0, y: 1 } => 0,
         Coords { x: 1, y: 0 } => 1,
@@ -202,9 +211,7 @@ pub fn part_one(input: &str) -> Option<i32> {
     Some(outcome)
 }
 
-fn get_side_oncube(pos: Coords){
-    
-}
+fn get_side_oncube(pos: Coords) {}
 
 fn find_position_cube(
     maze: &Maze,
@@ -227,13 +234,79 @@ fn find_position_cube(
             1 => return Some(new_position),
             _ => (),
         }
-
     }
 }
 
 
+enum CubeSides {
+    Top,
+    Left,
+    Right,
+    Front, 
+    Back,
+    Bottom,
+}
+
+enum NSEW {
+    North,
+    South,
+    East,
+    West
+}
+
+
+
+
+fn fold_cube(maze: &Maze) {
+    let cube_size = if cfg!(test) { 4 } else { 50 };
+
+    let mut small_maze: Vec<Vec<i8>> = vec![];
+    for i in (1..maze.dim().0).step_by(cube_size) {
+        let mut new_row = vec![];
+        for j in (1..maze.dim().1).step_by(cube_size) {
+            new_row.push(maze[[i, j]].min(1));
+        }
+        small_maze.push(new_row);
+    }
+
+    dbg!(small_maze);
+
+    let mut cube = HashMap;
+
+    //bfs over cube to fold it
+    let start: Coords = Coords { x: 0, y: small_maze[0].iter().position(|a| a> &0).unwrap() as i32 };
+    let directions = vec![Coords{x:0, y:1}, Coords{ x: 0, y: -1 }, Coords{ x: 1, y: 0 }, Coords{ x: -1, y: 0 }];
+    let mut queue: VecDeque<Coords> = VecDeque::new();
+    queue.push_back(start);
+    let mut visited: HashSet<Coords> = Default::default();
+    visited.insert(start);
+    while !queue.is_empty() {
+        let next = queue.pop_front().unwrap();
+        for dir in &directions {
+            let new_position = next - dir;
+            if new_position.x < 0 || new_position.y > (small_maze[0].len()-1) as i32 || new_position.y < 0 || new_position.y > (small_maze[0].len()-1) as i32  {
+                break; // not on grid
+            }
+            if small_maze[new_position.x as usize][new_position.y as usize] == 0 {
+                break;
+            }
+            // found adjacent grid
+
+
+        }
+    }
+
+}
 
 pub fn part_two(input: &str) -> Option<i32> {
+    let maze = parse_maze(input);
+    let instructions = parse_instructions(input);
+
+    // fold cube to get matching sides
+    fold_cube(&maze);
+
+    // do simulation with find position on cube
+
     None
 }
 
@@ -256,6 +329,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 22);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(5031));
     }
 }
