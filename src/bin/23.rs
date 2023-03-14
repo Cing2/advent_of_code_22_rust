@@ -70,10 +70,12 @@ impl Direction {
     }
 }
 
-fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> ElvesPositions {
+fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> (ElvesPositions, bool) {
     // first predict new position of each elf
     let mut new_positions: ElvesPositions = Default::default();
     let mut duplicates = vec![];
+
+    let mut changed = false;
 
     for pos in positions.keys() {
         // check if any elf around
@@ -125,6 +127,7 @@ fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> ElvesPosit
                 new_positions.insert(*pos, *pos);
             } else {
                 new_positions.insert(new_pos, *pos);
+                changed = true;
             }
             pos_added = true;
             break;
@@ -135,7 +138,7 @@ fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> ElvesPosit
         }
     }
 
-    new_positions
+    (new_positions, changed)
 }
 
 fn print_maze(positions: &ElvesPositions) {
@@ -159,7 +162,7 @@ pub fn part_one(input: &str) -> Option<i32> {
     let mut positions: ElvesPositions = parse_elves_position(input);
 
     for i in 0..10 {
-        positions = round_elve_positions(positions, i);
+        (positions, _) = round_elve_positions(positions, i);
     }
 
     // get size grid
@@ -173,19 +176,13 @@ pub fn part_one(input: &str) -> Option<i32> {
 
 pub fn part_two(input: &str) -> Option<i32> {
     let mut positions: ElvesPositions = parse_elves_position(input);
-
+    
+    let mut changed = true;
     for i in 0..10000 {
-        positions = round_elve_positions(positions, i);
+        (positions, changed) = round_elve_positions(positions, i);
 
-        let mut no_elf_moved = true;
-        for (key, value) in &positions {
-            if key != value {
-                no_elf_moved = false;
-                break;
-            }
-        }
-        if no_elf_moved {
-            return Some(i + 1);
+        if !changed {
+            return Some(i+1)
         }
     }
 
