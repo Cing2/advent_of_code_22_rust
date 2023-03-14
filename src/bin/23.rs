@@ -26,13 +26,12 @@ fn parse_elves_position(input: &str) -> ElvesPositions {
     let postitions = input
         .lines()
         .enumerate()
-        .map(|(i, line)| {
+        .flat_map(|(i, line)| {
             line.char_indices()
                 .filter(|(_, a)| a == &'#')
                 .map(|(j, _)| Position(i as i32, j as i32))
                 .collect::<Vec<Position>>()
         })
-        .flatten()
         .collect::<Vec<Position>>();
 
     let mut output: ElvesPositions = Default::default();
@@ -77,7 +76,6 @@ fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> ElvesPosit
     let mut duplicates = vec![];
 
     for pos in positions.keys() {
-        // println!("pos: {pos:?}");
         // check if any elf around
         let mut elves_around: VecDeque<(Direction, Cell<bool>)> = vec![
             (Direction::North, Cell::new(false)),
@@ -103,14 +101,13 @@ fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> ElvesPosit
         if elves_around.iter().all(|a| !a.1.get()) {
             // if no elves around do not move
             new_positions.insert(*pos, *pos);
-            // println!("none around: {:?}-{:?}", &pos, &pos);
             continue;
         }
 
         // consider each direction if it is valid
         let mut pos_added = false;
         for (dir, value) in &elves_around {
-            if value.get() == true {
+            if value.get() {
                 continue;
             }
             let new_pos = pos + dir.to_position();
@@ -122,14 +119,11 @@ fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> ElvesPosit
                 new_positions.insert(new_positions[&new_pos], new_positions[&new_pos]);
                 new_positions.remove(&new_pos);
                 // keep old position
-                // println!("dup1: {:?}-{:?}", &pos, &pos);
                 new_positions.insert(*pos, *pos);
             } else if duplicates.contains(&new_pos) {
                 // keep old position
-                // println!("dup2: {:?}-{:?}", &pos, &pos);
                 new_positions.insert(*pos, *pos);
             } else {
-                // println!("new: {:?}-{:?}", &new_pos, &pos);
                 new_positions.insert(new_pos, *pos);
             }
             pos_added = true;
@@ -137,14 +131,9 @@ fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> ElvesPosit
         }
         if !pos_added {
             // keep old position
-            // println!("None free: {:?}-{:?}", &pos, &pos);
             new_positions.insert(*pos, *pos);
         }
     }
-    // let mut output: ElvesPositions = Default::default();
-    // for pos in new_positions.keys() {
-    //     output.push(*pos);
-    // }
 
     new_positions
 }
@@ -196,7 +185,7 @@ pub fn part_two(input: &str) -> Option<i32> {
             }
         }
         if no_elf_moved {
-            return Some(i+1);
+            return Some(i + 1);
         }
     }
 
