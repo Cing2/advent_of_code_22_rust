@@ -19,8 +19,8 @@ impl Position {
 
 impl_op_ex!(+ |a: &Position, b: &Position| -> Position { Position(a.0+b.0, a.1+b.1)});
 
-type ElvesPositions = Vec<Position>;
-type ElvesPosMap = HashMap<Position, Position>;
+type ElvesPositions = HashMap<Position, Position>;
+// type ElvesPosMap = HashMap<Position, Position>;
 
 fn parse_elves_position(input: &str) -> ElvesPositions {
     let postitions = input
@@ -37,7 +37,7 @@ fn parse_elves_position(input: &str) -> ElvesPositions {
 
     let mut output: ElvesPositions = Default::default();
     for pos in postitions {
-        output.push(pos);
+        output.insert(pos, pos);
     }
 
     output
@@ -73,10 +73,10 @@ impl Direction {
 
 fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> ElvesPositions {
     // first predict new position of each elf
-    let mut new_positions: ElvesPosMap = Default::default();
+    let mut new_positions: ElvesPositions = Default::default();
     let mut duplicates = vec![];
 
-    for pos in &positions {
+    for pos in positions.keys() {
         // println!("pos: {pos:?}");
         // check if any elf around
         let mut elves_around: VecDeque<(Direction, Cell<bool>)> = vec![
@@ -94,13 +94,12 @@ fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> ElvesPosit
         for (dirs, value) in &elves_around {
             for dir in dirs.positions_around() {
                 let new_pos = pos + dir;
-                if positions.contains(&new_pos) {
+                if positions.contains_key(&new_pos) {
                     value.set(true);
                     break;
                 }
             }
         }
-        // println!("{:?} - {:?}",&pos, &elves_around);
         if elves_around.iter().all(|a| !a.1.get()) {
             // if no elves around do not move
             new_positions.insert(*pos, *pos);
@@ -142,21 +141,21 @@ fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> ElvesPosit
             new_positions.insert(*pos, *pos);
         }
     }
-    let mut output: ElvesPositions = Default::default();
-    for pos in new_positions.keys() {
-        output.push(*pos);
-    }
+    // let mut output: ElvesPositions = Default::default();
+    // for pos in new_positions.keys() {
+    //     output.push(*pos);
+    // }
 
-    output
+    new_positions
 }
 
 fn print_maze(positions: &ElvesPositions) {
-    let min_size = positions.iter().copied().reduce(|a, b| a.min(&b)).unwrap();
-    let max_size = positions.iter().copied().reduce(|a, b| a.max(&b)).unwrap();
+    let min_size = positions.keys().copied().reduce(|a, b| a.min(&b)).unwrap();
+    let max_size = positions.keys().copied().reduce(|a, b| a.max(&b)).unwrap();
     for i in min_size.0..(max_size.0 + 1) {
         for j in min_size.1..(max_size.1 + 1) {
             let pos = Position(i, j);
-            if positions.contains(&pos) {
+            if positions.contains_key(&pos) {
                 // dbg!(pos);
                 print!("#");
             } else {
@@ -169,9 +168,6 @@ fn print_maze(positions: &ElvesPositions) {
 
 pub fn part_one(input: &str) -> Option<i32> {
     let mut positions: ElvesPositions = parse_elves_position(input);
-    println!("{:?}", &positions);
-
-    print_maze(&positions);
 
     for i in 0..10 {
         positions = round_elve_positions(positions, i);
@@ -180,16 +176,32 @@ pub fn part_one(input: &str) -> Option<i32> {
     }
 
     // get size grid
-    let min_size = positions.iter().copied().reduce(|a, b| a.min(&b)).unwrap();
-    let max_size = positions.iter().copied().reduce(|a, b| a.max(&b)).unwrap();
+    let min_size = positions.keys().copied().reduce(|a, b| a.min(&b)).unwrap();
+    let max_size = positions.keys().copied().reduce(|a, b| a.max(&b)).unwrap();
     let size_square = (max_size.0 - min_size.0 + 1) * (max_size.1 - min_size.1 + 1);
     let empty_squares = size_square - positions.len() as i32;
-    dbg!(size_square, empty_squares, min_size, max_size);
 
     Some(empty_squares)
 }
 
 pub fn part_two(input: &str) -> Option<i32> {
+    let mut positions: ElvesPositions = parse_elves_position(input);
+
+    for i in 0..10000 {
+        positions = round_elve_positions(positions, i);
+
+        let mut no_elf_moved = true;
+        for (key, value) in &positions {
+            if key != value {
+                no_elf_moved = false;
+                break;
+            }
+        }
+        if no_elf_moved {
+            return Some(i+1);
+        }
+    }
+
     None
 }
 
@@ -212,6 +224,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 23);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(20));
     }
 }
