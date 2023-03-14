@@ -171,8 +171,6 @@ pub fn part_one(input: &str) -> Option<i32> {
 
     for i in 0..10 {
         positions = round_elve_positions(positions, i);
-        // println!("{:?}", &positions);
-        // print_maze(&positions);
     }
 
     // get size grid
