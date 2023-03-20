@@ -60,7 +60,7 @@ impl Direction {
         }
     }
 
-    fn to_position(&self) -> Position {
+    fn get_position(&self) -> Position {
         match self {
             Direction::North => Position(-1, 0),
             Direction::South => Position(1, 0),
@@ -112,7 +112,7 @@ fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> (ElvesPosi
             if value.get() {
                 continue;
             }
-            let new_pos = pos + dir.to_position();
+            let new_pos = pos + dir.get_position();
 
             if new_positions.contains_key(&new_pos) {
                 // if already contained in new_position remove it from list and from new pos

@@ -1,235 +1,271 @@
-\--- Day 23: Unstable Diffusion ---
+\--- Day 24: Blizzard Basin ---
 ----------
 
-You enter a large crater of gray dirt where the grove is supposed to be. All around you, plants you imagine were expected to be full of fruit are instead withered and broken. A large group of Elves has formed in the middle of the grove.
+With everything replanted for next year (and with elephants and monkeys to tend the grove), you and the Elves leave for the extraction point.
 
-"...but this volcano has been dormant for months. Without ash, the fruit can't grow!"
+Partway up the mountain that shields the grove is a flat, open area that serves as the extraction point. It's a bit of a climb, but nothing the expedition can't handle.
 
-You look up to see a massive, snow-capped mountain towering above you.
+At least, that would normally be true; now that the mountain is covered in snow, things have become more difficult than the Elves are used to.
 
-"It's not like there are other active volcanoes here; we've looked everywhere."
+As the expedition reaches a valley that must be traversed to reach the extraction site, you find that strong, turbulent winds are pushing small *blizzards* of snow and sharp ice around the valley. It's a good thing everyone packed warm clothes! To make it across safely, you'll need to find a way to avoid them.
 
-"But our scanners show active magma flows; clearly it's going *somewhere*."
-
-They finally notice you at the edge of the grove, your pack almost overflowing from the random *star* fruit you've been collecting. Behind you, elephants and monkeys explore the grove, looking concerned. Then, the Elves recognize the ash cloud slowly spreading above your recent detour.
-
-"Why do you--" "How is--" "Did you just--"
-
-Before any of them can form a complete question, another Elf speaks up: "Okay, new plan. We have almost enough fruit already, and ash from the plume should spread here eventually. If we quickly plant new seedlings now, we can still make it to the extraction point. Spread out!"
-
-The Elves each reach into their pack and pull out a tiny plant. The plants rely on important nutrients from the ash, so they can't be planted too close together.
-
-There isn't enough time to let the Elves figure out where to plant the seedlings themselves; you quickly scan the grove (your puzzle input) and note their positions.
-
-For example:
+Fortunately, it's easy to see all of this from the entrance to the valley, so you make a map of the valley and the blizzards (your puzzle input). For example:
 
 ```
-....#..
-..###.#
-#...#.#
-.#...##
-#.###..
-##.#.##
-.#..#..
+#.#####
+#.....#
+#>....#
+#.....#
+#...v.#
+#.....#
+#####.#
 
 ```
 
-The scan shows Elves `#` and empty ground `.`; outside your scan, more empty ground extends a long way in every direction. The scan is oriented so that *north is up*; orthogonal directions are written N (north), S (south), W (west), and E (east), while diagonal directions are written NE, NW, SE, SW.
+The walls of the valley are drawn as `#`; everything else is ground. Clear ground - where there is currently no blizzard - is drawn as `.`. Otherwise, blizzards are drawn with an arrow indicating their direction of motion: up (`^`), down (`v`), left (`<`), or right (`>`).
 
-The Elves follow a time-consuming process to figure out where they should each go; you can speed up this process considerably. The process consists of some number of *rounds* during which Elves alternate between considering where to move and actually moving.
-
-During the *first half* of each round, each Elf considers the eight positions adjacent to themself. If no other Elves are in one of those eight positions, the Elf *does not do anything* during this round. Otherwise, the Elf looks in each of four directions in the following order and *proposes* moving one step in the *first valid direction*:
-
-* If there is no Elf in the N, NE, or NW adjacent positions, the Elf proposes moving *north* one step.
-* If there is no Elf in the S, SE, or SW adjacent positions, the Elf proposes moving *south* one step.
-* If there is no Elf in the W, NW, or SW adjacent positions, the Elf proposes moving *west* one step.
-* If there is no Elf in the E, NE, or SE adjacent positions, the Elf proposes moving *east* one step.
-
-After each Elf has had a chance to propose a move, the *second half* of the round can begin. Simultaneously, each Elf moves to their proposed destination tile if they were the *only* Elf to propose moving to that position. If two or more Elves propose moving to the same position, *none* of those Elves move.
-
-Finally, at the end of the round, the *first direction* the Elves considered is moved to the end of the list of directions. For example, during the second round, the Elves would try proposing a move to the south first, then west, then east, then north. On the third round, the Elves would first consider west, then east, then north, then south.
-
-As a smaller example, consider just these five Elves:
+The above map includes two blizzards, one moving right (`>`) and one moving down (`v`). In one minute, each blizzard moves one position in the direction it is pointing:
 
 ```
-.....
-..##.
-..#..
-.....
-..##.
-.....
+#.#####
+#.....#
+#.>...#
+#.....#
+#.....#
+#...v.#
+#####.#
 
 ```
 
-The northernmost two Elves and southernmost two Elves all propose moving north, while the middle Elf cannot move north and proposes moving south. The middle Elf proposes the same destination as the southwest Elf, so neither of them move, but the other three do:
+Due to conservation of blizzard energy, as a blizzard reaches the wall of the valley, a new blizzard forms on the opposite side of the valley moving in the same direction. After another minute, the bottom downward-moving blizzard has been replaced with a new downward-moving blizzard at the top of the valley instead:
 
 ```
-..##.
-.....
-..#..
-...#.
-..#..
-.....
-
-```
-
-Next, the northernmost two Elves and the southernmost Elf all propose moving south. Of the remaining middle two Elves, the west one cannot move south and proposes moving west, while the east one cannot move south *or* west and proposes moving east. All five Elves succeed in moving to their proposed positions:
-
-```
-.....
-..##.
-.#...
-....#
-.....
-..#..
+#.#####
+#...v.#
+#..>..#
+#.....#
+#.....#
+#.....#
+#####.#
 
 ```
 
-Finally, the southernmost two Elves choose not to move at all. Of the remaining three Elves, the west one proposes moving west, the east one proposes moving east, and the middle one proposes moving north; all three succeed in moving:
+Because blizzards are made of tiny snowflakes, they pass right through each other. After another minute, both blizzards temporarily occupy the same position, marked `2`:
 
 ```
-..#..
-....#
-#....
-....#
-.....
-..#..
-
-```
-
-At this point, no Elves need to move, and so the process ends.
-
-The larger example above proceeds as follows:
-
-```
-== Initial State ==
-..............
-..............
-.......#......
-.....###.#....
-...#...#.#....
-....#...##....
-...#.###......
-...##.#.##....
-....#..#......
-..............
-..............
-..............
-
-== End of Round 1 ==
-..............
-.......#......
-.....#...#....
-...#..#.#.....
-.......#..#...
-....#.#.##....
-..#..#.#......
-..#.#.#.##....
-..............
-....#..#......
-..............
-..............
-
-== End of Round 2 ==
-..............
-.......#......
-....#.....#...
-...#..#.#.....
-.......#...#..
-...#..#.#.....
-.#...#.#.#....
-..............
-..#.#.#.##....
-....#..#......
-..............
-..............
-
-== End of Round 3 ==
-..............
-.......#......
-.....#....#...
-..#..#...#....
-.......#...#..
-...#..#.#.....
-.#..#.....#...
-.......##.....
-..##.#....#...
-...#..........
-.......#......
-..............
-
-== End of Round 4 ==
-..............
-.......#......
-......#....#..
-..#...##......
-...#.....#.#..
-.........#....
-.#...###..#...
-..#......#....
-....##....#...
-....#.........
-.......#......
-..............
-
-== End of Round 5 ==
-.......#......
-..............
-..#..#.....#..
-.........#....
-......##...#..
-.#.#.####.....
-...........#..
-....##..#.....
-..#...........
-..........#...
-....#..#......
-..............
+#.#####
+#.....#
+#...2.#
+#.....#
+#.....#
+#.....#
+#####.#
 
 ```
 
-After a few more rounds...
+After another minute, the situation resolves itself, giving each blizzard back its personal space:
 
 ```
-== End of Round 10 ==
-.......#......
-...........#..
-..#.#..#......
-......#.......
-...#.....#..#.
-.#......##....
-.....##.......
-..#........#..
-....#.#..#....
-..............
-....#..#..#...
-..............
+#.#####
+#.....#
+#....>#
+#...v.#
+#.....#
+#.....#
+#####.#
 
 ```
 
-To make sure they're on the right track, the Elves like to check after round 10 that they're making good progress toward covering enough ground. To do this, count the number of empty ground tiles contained by the smallest rectangle that contains every Elf. (The edges of the rectangle should be aligned to the N/S/E/W directions; the Elves do not have the patience to calculate arbitrary rectangles.) In the above example, that rectangle is:
+Finally, after yet another minute, the rightward-facing blizzard on the right is replaced with a new one on the left facing the same direction:
 
 ```
-......#.....
-..........#.
-.#.#..#.....
-.....#......
-..#.....#..#
-#......##...
-....##......
-.#........#.
-...#.#..#...
-............
-...#..#..#..
+#.#####
+#.....#
+#>....#
+#.....#
+#...v.#
+#.....#
+#####.#
 
 ```
 
-In this region, the number of empty ground tiles is `*110*`.
+This process repeats at least as long as you are observing it, but probably forever.
 
-Simulate the Elves' process and find the smallest rectangle that contains the Elves after 10 rounds. *How many empty ground tiles does that rectangle contain?*
+Here is a more complex example:
 
-To begin, [get your puzzle input](23/input).
+```
+#.######
+#>>.<^<#
+#.<..<<#
+#>v.><>#
+#<^v^^>#
+######.#
+
+```
+
+Your expedition begins in the only non-wall position in the top row and needs to reach the only non-wall position in the bottom row. On each minute, you can *move* up, down, left, or right, or you can *wait* in place. You and the blizzards act *simultaneously*, and you cannot share a position with a blizzard.
+
+In the above example, the fastest way to reach your goal requires `*18*` steps. Drawing the position of the expedition as `E`, one way to achieve this is:
+
+```
+Initial state:
+#E######
+#>>.<^<#
+#.<..<<#
+#>v.><>#
+#<^v^^>#
+######.#
+
+Minute 1, move down:
+#.######
+#E>3.<.#
+#<..<<.#
+#>2.22.#
+#>v..^<#
+######.#
+
+Minute 2, move down:
+#.######
+#.2>2..#
+#E^22^<#
+#.>2.^>#
+#.>..<.#
+######.#
+
+Minute 3, wait:
+#.######
+#<^<22.#
+#E2<.2.#
+#><2>..#
+#..><..#
+######.#
+
+Minute 4, move up:
+#.######
+#E<..22#
+#<<.<..#
+#<2.>>.#
+#.^22^.#
+######.#
+
+Minute 5, move right:
+#.######
+#2Ev.<>#
+#<.<..<#
+#.^>^22#
+#.2..2.#
+######.#
+
+Minute 6, move right:
+#.######
+#>2E<.<#
+#.2v^2<#
+#>..>2>#
+#<....>#
+######.#
+
+Minute 7, move down:
+#.######
+#.22^2.#
+#<vE<2.#
+#>>v<>.#
+#>....<#
+######.#
+
+Minute 8, move left:
+#.######
+#.<>2^.#
+#.E<<.<#
+#.22..>#
+#.2v^2.#
+######.#
+
+Minute 9, move up:
+#.######
+#<E2>>.#
+#.<<.<.#
+#>2>2^.#
+#.v><^.#
+######.#
+
+Minute 10, move right:
+#.######
+#.2E.>2#
+#<2v2^.#
+#<>.>2.#
+#..<>..#
+######.#
+
+Minute 11, wait:
+#.######
+#2^E^2>#
+#<v<.^<#
+#..2.>2#
+#.<..>.#
+######.#
+
+Minute 12, move down:
+#.######
+#>>.<^<#
+#.<E.<<#
+#>v.><>#
+#<^v^^>#
+######.#
+
+Minute 13, move down:
+#.######
+#.>3.<.#
+#<..<<.#
+#>2E22.#
+#>v..^<#
+######.#
+
+Minute 14, move right:
+#.######
+#.2>2..#
+#.^22^<#
+#.>2E^>#
+#.>..<.#
+######.#
+
+Minute 15, move right:
+#.######
+#<^<22.#
+#.2<.2.#
+#><2>E.#
+#..><..#
+######.#
+
+Minute 16, move right:
+#.######
+#.<..22#
+#<<.<..#
+#<2.>>E#
+#.^22^.#
+######.#
+
+Minute 17, move down:
+#.######
+#2.v.<>#
+#<.<..<#
+#.^>^22#
+#.2..2E#
+######.#
+
+Minute 18, move down:
+#.######
+#>2.<.<#
+#.2v^2<#
+#>..>2>#
+#<....>#
+######E#
+
+```
+
+*What is the fewest number of minutes required to avoid the blizzards and reach the goal?*
+
+To begin, [get your puzzle input](24/input).
 
 Answer:
 
-You can also [Shareon [Twitter](https://twitter.com/intent/tweet?text=%22Unstable+Diffusion%22+%2D+Day+23+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F23&related=ericwastl&hashtags=AdventOfCode) [Mastodon](javascript:void(0);)] this puzzle.
+You can also [Shareon [Twitter](https://twitter.com/intent/tweet?text=%22Blizzard+Basin%22+%2D+Day+24+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F24&related=ericwastl&hashtags=AdventOfCode) [Mastodon](javascript:void(0);)] this puzzle.
