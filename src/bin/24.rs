@@ -9,7 +9,6 @@ use num::integer::lcm;
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 struct Position(i32, i32);
 
-
 #[derive(Debug, Clone, Copy)]
 enum Direction {
     Left,
@@ -98,7 +97,7 @@ impl Maze {
             return true;
         }
         // exclude border because there are walls
-        !(pos.0 < 1 || pos.1 < 1 || pos.0 > self.maze_size.0 - 2 || pos.1 > self.maze_size.1 -2)
+        !(pos.0 < 1 || pos.1 < 1 || pos.0 > self.maze_size.0 - 2 || pos.1 > self.maze_size.1 - 2)
     }
 
     fn future_contains_blizzard(&self, minute: i32, pos: &Position) -> bool {
@@ -201,7 +200,7 @@ impl Position {
     }
 }
 
-fn a_star_search(start_pos: &Position, end_pos: &Position, maze: &Maze) -> i32 {
+fn a_star_search(maze: &Maze, start_pos: &Position, end_pos: &Position, start_time: i32) -> i32 {
     // apply alpha star search
     // let mut open: Vec<Node> = vec![start];
     let mut open = BinaryHeap::new();
@@ -210,12 +209,12 @@ fn a_star_search(start_pos: &Position, end_pos: &Position, maze: &Maze) -> i32 {
     open.push(Node {
         pos: *start_pos,
         heuristic: start_pos.manhatten_dist(end_pos),
-        minute: 0,
+        minute: start_time,
     });
-    closed.insert((*start_pos, 0));
+    closed.insert((*start_pos, start_time));
 
     while let Some(node) = open.pop() {
-        if node.pos == maze.exit {
+        if node.pos == *end_pos {
             // dbg!("Found the end!");
             return node.minute;
         }
@@ -246,13 +245,12 @@ fn a_star_search(start_pos: &Position, end_pos: &Position, maze: &Maze) -> i32 {
     0
 }
 
-
 pub fn part_one(input: &str) -> Option<i32> {
     let mut maze = parse_maze(input);
     // dbg!(maze.repeats_at, maze.maze_size);
     maze.precompute_blizzards();
 
-    let steps = a_star_search(&maze.start, &maze.exit, &maze);
+    let steps = a_star_search(&maze, &maze.start, &maze.exit, 0);
     Some(steps)
 }
 
@@ -261,7 +259,9 @@ pub fn part_two(input: &str) -> Option<i32> {
     // dbg!(maze.repeats_at, maze.maze_size);
     maze.precompute_blizzards();
 
-    let steps = a_star_search(&maze.start, &maze.exit, &maze);
+    let mut steps = a_star_search(&maze, &maze.start, &maze.exit, 0);
+    steps = a_star_search(&maze, &maze.exit, &maze.start, steps);
+    steps = a_star_search(&maze, &maze.start, &maze.exit, steps);
     Some(steps)
 }
 
