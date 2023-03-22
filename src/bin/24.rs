@@ -1,7 +1,4 @@
-use std::{
-    cmp::Ordering,
-    collections::{BinaryHeap, VecDeque},
-};
+use std::{cmp::Ordering, collections::BinaryHeap};
 
 use hashbrown::{HashMap, HashSet};
 use num::integer::lcm;
@@ -122,22 +119,20 @@ impl Maze {
                     } else {
                         print!("{}", dirs.len());
                     }
-                } else {
-                    if i == 0
-                        || j == 0
-                        || i == (self.maze_size.0 - 1)
-                        || j == (self.maze_size.1 - 1)
-                    {
-                        if Position(i, j) == self.start {
-                            print!("E");
-                        } else if Position(i, j) == self.exit {
-                            print!("F");
-                        } else {
-                            print!("#");
-                        }
+                } else if i == 0
+                    || j == 0
+                    || i == (self.maze_size.0 - 1)
+                    || j == (self.maze_size.1 - 1)
+                {
+                    if Position(i, j) == self.start {
+                        print!("E");
+                    } else if Position(i, j) == self.exit {
+                        print!("F");
                     } else {
-                        print!(".")
+                        print!("#");
                     }
+                } else {
+                    print!(".")
                 }
             }
             println!();
