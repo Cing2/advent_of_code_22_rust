@@ -1,6 +1,5 @@
-use std::cell::RefCell;
-
 use hashbrown::HashMap;
+use num::integer::lcm;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 struct Position(i32, i32);
@@ -20,21 +19,21 @@ struct Blizzards {
 
 #[derive(Debug)]
 struct Maze {
-    blizzards: Blizzards,
+    blizzards_times: Vec<Blizzards>,
     maze_size: Position,
     start: Position,
     exit: Position,
-    future_blizzards: RefCell<HashMap<i32, Blizzards>>,
+    lcm: i32,
 }
 
 impl Default for Maze {
     fn default() -> Self {
         Maze {
-            blizzards: Default::default(),
+            blizzards_times: vec![],
             maze_size: Position(0, 0),
             start: Position(0, 1),
             exit: Position(0, 0),
-            future_blizzards: Default::default(),
+            lcm: 0,
         }
     }
 }
@@ -80,6 +79,14 @@ impl Blizzards {
 }
 
 impl Maze {
+    fn precompute_blizzards(&mut self) {
+        // precompute list of blizzards to lcm of height and width maze
+        for i in 0..(self.lcm - 1) {
+            let next_blizzards = self.blizzards_times[i as usize].next_minute(&self.maze_size);
+            self.blizzards_times.push(next_blizzards);
+        }
+    }
+
     fn position_on_map(&self, pos: &Position) -> bool {
         if pos == &self.start || pos == &self.exit {
             return true;
@@ -87,61 +94,37 @@ impl Maze {
         !(pos.0 < 1 || pos.1 < 1 || pos.0 > self.maze_size.0 - 2 || pos.1 > self.maze_size.1)
     }
 
-    fn make_minute(&self, minute: i32) {
-        let next_blizzards =  if minute == 1 {
-            self.blizzards.next_minute(&self.maze_size)
-        } else {
-            if !self.future_blizzards.borrow().contains_key(&(minute - 1)) {
-                self.make_minute(minute - 1);
-            }
-    
-            self.future_blizzards.borrow()[&(minute - 1)].next_minute(&self.maze_size)
-        };
-
-        self.future_blizzards
-            .borrow_mut()
-            .insert(minute, next_blizzards);
-    }
-
     fn future_contains_blizzard(&self, minute: i32, pos: &Position) -> bool {
-        if minute == 0 {
-            return self.blizzards.storms.contains_key(pos);
-        } else {
-            if !self.future_blizzards.borrow().contains_key(&minute) {
-                self.make_minute(minute);
-            }
-            return self.future_blizzards.borrow()[&minute].storms.contains_key(pos);
-        }
+        self.blizzards_times[minute as usize]
+            .storms
+            .contains_key(pos)
     }
 }
 
 fn parse_maze(input: &str) -> Maze {
     let mut maze: Maze = Default::default();
+    let mut blizzards: Blizzards = Default::default();
     maze.maze_size.1 = input.lines().last().unwrap().len() as i32;
 
     for (i, line) in input.lines().enumerate() {
         maze.maze_size.0 += 1;
         for (j, c) in line.char_indices() {
             match c {
-                '>' => maze
-                    .blizzards
-                    .add_direction(Position(i as i32, j as i32), Direction::Right),
-                '<' => maze
-                    .blizzards
-                    .add_direction(Position(i as i32, j as i32), Direction::Left),
-                '^' => maze
-                    .blizzards
-                    .add_direction(Position(i as i32, j as i32), Direction::Up),
-                'v' => maze
-                    .blizzards
-                    .add_direction(Position(i as i32, j as i32), Direction::Down),
+                '>' => blizzards.add_direction(Position(i as i32, j as i32), Direction::Right),
+                '<' => blizzards.add_direction(Position(i as i32, j as i32), Direction::Left),
+                '^' => blizzards.add_direction(Position(i as i32, j as i32), Direction::Up),
+                'v' => blizzards.add_direction(Position(i as i32, j as i32), Direction::Down),
                 _ => (),
             };
         }
     }
 
-    // is last row, fartest right
+    maze.blizzards_times.push(blizzards);
+
+    // exit is last row, fartest right
     maze.exit = Position(maze.maze_size.0 - 1, maze.maze_size.1 - 2);
+    // least common multiple for height and width for when blizzards loop around to same position
+    maze.lcm = lcm(maze.maze_size.0 - 2, maze.maze_size.1 - 2);
 
     maze
 }
@@ -153,14 +136,22 @@ struct Node {
     minute: i32,
 }
 
+impl Node {
+    fn looped_time(&self, lcm: i32) -> i32 {
+         self.minute % lcm
+    }
+}
+
 fn manhatten_dist(a: Position, b: Position) -> i32 {
     (a.0 - b.0).abs() + (a.1 - b.1).abs()
 }
 
+type NodeList = HashMap<(Position, i32), Node>;
+
 fn a_star_search(start: Node, maze: &Maze) -> i32 {
     // apply alpha star search
     let mut open: Vec<Node> = vec![start];
-    let mut closed: Vec<Node> = vec![];
+    let mut closed: NodeList = Default::default();
 
     while !open.is_empty() {
         open.sort_by_key(|n| -(n.g + n.h + n.minute));
@@ -169,13 +160,15 @@ fn a_star_search(start: Node, maze: &Maze) -> i32 {
             // dbg!("Found the end!");
             return node_f.minute;
         }
+        let time_looped = node_f.looped_time(maze.lcm);
 
         // loop over sucessors
         for dir in &[(0, 1), (1, 0), (0, -1), (-1, 0), (0, 0)] {
             let new_pos = Position(node_f.pos.0 + dir.0, node_f.pos.1 + dir.1);
             // check if position is on map and no blizzards there
+            let new_time = (node_f.minute + 1) % maze.lcm;
             if !maze.position_on_map(&new_pos)
-                || maze.future_contains_blizzard(node_f.minute+1, &new_pos)
+                || maze.future_contains_blizzard(new_time, &new_pos)
             {
                 continue;
             }
@@ -186,33 +179,39 @@ fn a_star_search(start: Node, maze: &Maze) -> i32 {
                 pos: new_pos,
                 minute: node_f.minute + 1,
             };
-            // // check if we do not already have a node with a lower value in open or closed
-            // let mut is_lowest = true;
-            // for n in &open {
-            //     if n.pos == new_node.pos && n.g <= new_node.g {
-            //         is_lowest = false;
-            //     }
-            // }
-            // for n in &closed {
-            //     if n.pos == new_node.pos && n.g <= new_node.g {
-            //         is_lowest = false;
-            //     }
-            // }
-            // if !is_lowest {
-            //     continue;
-            // }
+            // check if we do not already have a node with a lower value in open or closed
+            let mut is_lowest = true;
+            for n in &open {
+                if n.pos == new_node.pos && n.looped_time(maze.lcm) == new_time && n.g <= new_node.g {
+                    is_lowest = false;
+                }
+            }
+            if let Some(n) = closed.get(&(new_pos, new_time)) {
+                if n.g <= new_node.g {
+                    is_lowest = false;
+                }
+            }
+            
+            if !is_lowest {
+                continue;
+            }
             open.push(new_node);
         }
-        closed.push(node_f);
+        closed.insert((node_f.pos, time_looped),node_f);
     }
     dbg!("help");
     0
 }
 
 pub fn part_one(input: &str) -> Option<i32> {
-    let maze = parse_maze(input);
+    let mut maze = parse_maze(input);
     // println!("{:?}", maze);
     // println!("New: {:?}", maze.next_minute());
+    dbg!(maze.lcm, maze.maze_size);
+    maze.precompute_blizzards();
+
+
+    println!("Starting a star");
 
     // apply alpha star search
     let start = Node {
