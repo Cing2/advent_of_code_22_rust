@@ -141,6 +141,7 @@ fn round_elve_positions(positions: ElvesPositions, iteration: i32) -> (ElvesPosi
     (new_positions, changed)
 }
 
+#[warn(dead_code)]
 fn print_maze(positions: &ElvesPositions) {
     let min_size = positions.keys().copied().reduce(|a, b| a.min(&b)).unwrap();
     let max_size = positions.keys().copied().reduce(|a, b| a.max(&b)).unwrap();
@@ -176,13 +177,13 @@ pub fn part_one(input: &str) -> Option<i32> {
 
 pub fn part_two(input: &str) -> Option<i32> {
     let mut positions: ElvesPositions = parse_elves_position(input);
-    
+
     let mut changed = true;
     for i in 0..10000 {
         (positions, changed) = round_elve_positions(positions, i);
 
         if !changed {
-            return Some(i+1)
+            return Some(i + 1);
         }
     }
 
