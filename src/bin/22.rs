@@ -2,7 +2,7 @@
 extern crate impl_ops;
 use std::{collections::VecDeque, ops};
 
-use hashbrown::{HashMap, HashSet};
+use hashbrown::HashSet;
 use itertools::enumerate;
 use ndarray::prelude::*;
 

@@ -1,10 +1,14 @@
-use std::{cmp::Ordering, collections::BinaryHeap};
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, VecDeque},
+};
 
 use hashbrown::{HashMap, HashSet};
 use num::integer::lcm;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 struct Position(i32, i32);
+
 
 #[derive(Debug, Clone, Copy)]
 enum Direction {
@@ -22,7 +26,6 @@ struct Blizzards {
 #[derive(Debug)]
 struct Maze {
     blizzards_times: Vec<Blizzards>,
-    future_blizzards: HashSet<(Position, i32)>,
     maze_size: Position,
     start: Position,
     exit: Position,
@@ -33,7 +36,6 @@ impl Default for Maze {
     fn default() -> Self {
         Maze {
             blizzards_times: vec![],
-            future_blizzards: Default::default(),
             maze_size: Position(0, 0),
             start: Position(0, 1),
             exit: Position(0, 0),
@@ -74,7 +76,7 @@ impl Blizzards {
                 } else if next_pos.1 == maze_size.1 - 1 {
                     next_pos.1 = 1;
                 }
-                new_blizzards.add_direction(next_pos, dir.clone());
+                new_blizzards.add_direction(next_pos, *dir);
             }
         }
 
@@ -85,14 +87,9 @@ impl Blizzards {
 impl Maze {
     fn precompute_blizzards(&mut self) {
         // precompute list of blizzards to lcm of height and width maze
-        let mut current_blizzards = self.blizzards_times[0].clone();
         for i in 0..self.repeats_at {
-            for pos in current_blizzards.storms.keys() {
-                self.future_blizzards.insert((*pos, i));
-            }
-            current_blizzards = current_blizzards.next_minute(&self.maze_size);
-            // let next_blizzards = self.blizzards_times[i as usize].next_minute(&self.maze_size);
-            // self.blizzards_times.push(next_blizzards);
+            let next_blizzards = self.blizzards_times[i as usize].next_minute(&self.maze_size);
+            self.blizzards_times.push(next_blizzards);
         }
     }
 
@@ -101,14 +98,51 @@ impl Maze {
             return true;
         }
         // exclude border because there are walls
-        !(pos.0 < 1 || pos.1 < 1 || pos.0 > self.maze_size.0 - 2 || pos.1 > self.maze_size.1)
+        !(pos.0 < 1 || pos.1 < 1 || pos.0 > self.maze_size.0 - 2 || pos.1 > self.maze_size.1 -2)
     }
 
     fn future_contains_blizzard(&self, minute: i32, pos: &Position) -> bool {
-        self.future_blizzards.contains(&(*pos, minute))
-        // self.blizzards_times[minute as usize]
-        //     .storms
-        //     .contains_key(pos)
+        self.blizzards_times[minute as usize]
+            .storms
+            .contains_key(pos)
+    }
+
+    #[allow(dead_code)]
+    fn display(&self, minute: usize) {
+        println!("Maze at minute: {}", minute);
+        for i in 0..self.maze_size.0 {
+            for j in 0..self.maze_size.1 {
+                if let Some(dirs) = self.blizzards_times[minute].storms.get(&Position(i, j)) {
+                    if dirs.len() == 1 {
+                        match dirs[0] {
+                            Direction::Left => print!("<"),
+                            Direction::Right => print!(">"),
+                            Direction::Up => print!("^"),
+                            Direction::Down => print!("v"),
+                        }
+                    } else {
+                        print!("{}", dirs.len());
+                    }
+                } else {
+                    if i == 0
+                        || j == 0
+                        || i == (self.maze_size.0 - 1)
+                        || j == (self.maze_size.1 - 1)
+                    {
+                        if Position(i, j) == self.start {
+                            print!("E");
+                        } else if Position(i, j) == self.exit {
+                            print!("F");
+                        } else {
+                            print!("#");
+                        }
+                    } else {
+                        print!(".")
+                    }
+                }
+            }
+            println!();
+        }
     }
 }
 
@@ -212,23 +246,23 @@ fn a_star_search(start_pos: &Position, end_pos: &Position, maze: &Maze) -> i32 {
     0
 }
 
+
 pub fn part_one(input: &str) -> Option<i32> {
     let mut maze = parse_maze(input);
-    // println!("{:?}", maze);
-    // println!("New: {:?}", maze.next_minute());
-    dbg!(maze.repeats_at, maze.maze_size);
+    // dbg!(maze.repeats_at, maze.maze_size);
     maze.precompute_blizzards();
 
-    println!("Starting a star");
-
-    // apply alpha star search
     let steps = a_star_search(&maze.start, &maze.exit, &maze);
-    dbg!(steps);
     Some(steps)
 }
 
 pub fn part_two(input: &str) -> Option<i32> {
-    None
+    let mut maze = parse_maze(input);
+    // dbg!(maze.repeats_at, maze.maze_size);
+    maze.precompute_blizzards();
+
+    let steps = a_star_search(&maze.start, &maze.exit, &maze);
+    Some(steps)
 }
 
 fn main() {
@@ -250,6 +284,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 24);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(54));
     }
 }
