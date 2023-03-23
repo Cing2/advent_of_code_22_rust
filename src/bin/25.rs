@@ -20,7 +20,7 @@ fn snafu_to_int(input: &str) -> i64 {
 }
 
 fn sumup_snafu(input: &str) -> i64 {
-    input.lines().map(|l| snafu_to_int(l)).sum()
+    input.lines().map(snafu_to_int).sum()
 }
 
 const SNAFU_LENGTH: usize = 25;
@@ -81,7 +81,7 @@ impl SnafuNumber {
         }
     }
 
-    fn to_string(&self) -> String {
+    fn to_text(&self) -> String {
         self.multiples
             .iter()
             .rev()
@@ -105,7 +105,7 @@ pub fn part_one(input: &str) -> Option<String> {
     let mut snafu: SnafuNumber = SnafuNumber::default();
     snafu.add_number(sum_fuel);
 
-    Some(snafu.to_string())
+    Some(snafu.to_text())
 }
 
 pub fn part_two(input: &str) -> Option<String> {
