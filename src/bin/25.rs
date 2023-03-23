@@ -34,45 +34,41 @@ impl SnafuNumber {
         self.multiples[exp] += increase;
 
         self.rechange_multiple(exp);
-
     }
 
-    fn rechange_multiple(&mut self, exp: usize){
+    fn rechange_multiple(&mut self, exp: usize) {
         if self.multiples[exp] > 2 {
-            self.multiples[exp+1] += 1;
+            self.multiples[exp + 1] += 1;
             self.multiples[exp] -= 5;
-            self.rechange_multiple(exp+1);
+            self.rechange_multiple(exp + 1);
         } else if self.multiples[exp] < -2 {
-            self.multiples[exp+1] -= 1;
+            self.multiples[exp + 1] -= 1;
             self.multiples[exp] += 5;
-            self.rechange_multiple(exp+1);
+            self.rechange_multiple(exp + 1);
         }
     }
 
     fn add_number(&mut self, number: i64) {
         for exp in 0..SNAFU_LENGTH {
-            // find heighest exp that is higher
+            // find lowest exp that is higher
             if 5i64.pow(exp as u32) > number {
                 // check how often previous base fits into this one
-                let (multiple, remainder) =
-                    (number / 5i64.pow((exp - 1) as u32), number % 5i64.pow((exp - 1) as u32));
-                // println!(
-                //     "Base: {}, multiple: {}, rem: {}",
-                //     5i64.pow((exp - 1) as u32),
-                //     multiple,
-                //     remainder
-                // );
+                let (multiple, remainder) = (
+                    number / 5i64.pow((exp - 1) as u32),
+                    number % 5i64.pow((exp - 1) as u32),
+                );
+
                 match multiple {
-                    0 => {},
-                    1 => self.increase_exp(exp-1, 1),
-                    2 => self.increase_exp(exp-1, 2),
+                    0 => {}
+                    1 => self.increase_exp(exp - 1, 1),
+                    2 => self.increase_exp(exp - 1, 2),
                     3 => {
                         self.increase_exp(exp, 1);
-                        self.increase_exp(exp-1, -2)
+                        self.increase_exp(exp - 1, -2)
                     }
                     4 => {
                         self.increase_exp(exp, 1);
-                        self.increase_exp(exp-1, -1)
+                        self.increase_exp(exp - 1, -1)
                     }
                     5 => print!("should not get this"),
                     _ => panic!("hekki"),
@@ -86,22 +82,25 @@ impl SnafuNumber {
     }
 
     fn to_string(&self) -> String {
-        self.multiples.iter().rev().map(|a| {
-            match a {
+        self.multiples
+            .iter()
+            .rev()
+            .map(|a| match a {
                 0 => '0',
                 1 => '1',
                 2 => '2',
                 -1 => '-',
                 -2 => '=',
                 _ => unreachable!(),
-            }
-        }).collect::<String>().trim_start_matches('0').to_owned()
+            })
+            .collect::<String>()
+            .trim_start_matches('0')
+            .to_owned()
     }
 }
 
 pub fn part_one(input: &str) -> Option<String> {
     let sum_fuel = sumup_snafu(input);
-    // dbg!(sum_fuel);
 
     let mut snafu: SnafuNumber = SnafuNumber::default();
     snafu.add_number(sum_fuel);
